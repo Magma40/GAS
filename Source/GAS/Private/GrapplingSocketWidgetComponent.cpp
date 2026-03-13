@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "GrapplingSocketWidgetComponent.h"
+
+#include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 
 UGrapplingSocketWidgetComponent::UGrapplingSocketWidgetComponent()
 {
@@ -24,7 +27,11 @@ void UGrapplingSocketWidgetComponent::InitWidget()
 	Super::InitWidget();
 
 	//Try to get the GrapplingSocketWidget
-	if (IsValid(GetWidget())) GrapplingSocketWidget = Cast<UGrapplingSocketWidget>(GetWidget());
+	if (IsValid(GetWidget()))
+	{
+		GrapplingSocketWidget = Cast<UGrapplingSocketWidget>(GetWidget());
+		GrapplingSocketWidget->SetWidgetComponent(this);
+	}
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s:InitWidget - GetWidget() not found"), *StaticClass()->GetName());
@@ -46,7 +53,6 @@ void UGrapplingSocketWidgetComponent::SetWidgetImageVisibility(const bool Visibi
 	if (!GIsPlayInEditorWorld)
 	{
 		GrapplingSocketWidget->RebuildWidget();
-		InitWidget();
 		return;
 	}
 	
@@ -69,7 +75,6 @@ void UGrapplingSocketWidgetComponent::SetWidgetTextVisibility(const bool Visibil
 	if (!GIsPlayInEditorWorld)
 	{
 		GrapplingSocketWidget->RebuildWidget();
-		InitWidget();
 		return;
 	}
 	
@@ -163,17 +168,16 @@ TSharedRef<SWidget> UGrapplingSocketWidget::RebuildWidget()
 
 FTransferSettings UGrapplingSocketWidget::UpdateTransferSettings() const
 {
+	//Construct new TransferSettings
 	FTransferSettings TransferSettings = FTransferSettings();
-	UObject* Outer = GetOuter();
-	if (IsValid(Outer))
+
+	//If we know who owns this widget, apply its stored TransferSettings
+	if (IsValid(GrapplingSocketWidgetComponent))
 	{
-		UGrapplingSocketWidgetComponent* ComponentOuter = Cast<UGrapplingSocketWidgetComponent>(Outer);
-		if (IsValid(ComponentOuter))
-		{
-			TransferSettings.bImageVisible = ComponentOuter->GetTransferSettings().bImageVisible;
-			TransferSettings.bTextVisible = ComponentOuter->GetTransferSettings().bTextVisible;
-		}
+		TransferSettings.bImageVisible = GrapplingSocketWidgetComponent->GetTransferSettings().bImageVisible;
+		TransferSettings.bTextVisible = GrapplingSocketWidgetComponent->GetTransferSettings().bTextVisible;
 	}
+	
 	return TransferSettings;
 }
 

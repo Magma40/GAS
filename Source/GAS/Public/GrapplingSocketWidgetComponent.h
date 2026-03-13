@@ -70,7 +70,7 @@ class GAS_API UGrapplingSocketWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-
+	
 	//Get Image Reference
 	UImage* GetImage() const { return Image; }
 
@@ -86,6 +86,9 @@ public:
 	//Set a new text for the text block
 	void SetText(const FText& NewText) const;
 
+	//Sets the GrapplingSocketWidgetComponent reference
+	void SetWidgetComponent(UGrapplingSocketWidgetComponent* NewWidgetComponent) { GrapplingSocketWidgetComponent = NewWidgetComponent; }
+
 	//Custom Widget Builder
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 
@@ -93,7 +96,9 @@ public:
 	FTransferSettings UpdateTransferSettings() const;
 	
 private:
-
+	//Reference to GrapplingSocketWidgetComponent(who owns this UserWidget), this is a solution because I cant get component from UserWidget
+	UPROPERTY() UGrapplingSocketWidgetComponent* GrapplingSocketWidgetComponent = nullptr;
+	
 	//Canvas Reference
 	UPROPERTY() UCanvasPanel* CanvasPanel = nullptr;
 

@@ -2,6 +2,7 @@
 #include "GrappleSocket.h"
 #include "GrapplingSocketWidgetComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -84,7 +85,9 @@ void AGrappleSocket::Tick(float DeltaTime)
 	if(IsInRangeToGrapple(Cached_PlayerPawn))
 	{
 		const FVector Direction = (Cached_PlayerPawn->GetActorLocation() -  GetActorLocation()).GetSafeNormal();
-		const FVector NewLocation = GetActorLocation() + Direction * StaticMeshComponent->GetComponentScale() * 55.0f;
+		const FBoxSphereBounds Bounds = StaticMeshComponent->GetStaticMesh()->GetBounds();
+		const float Radius = Bounds.SphereRadius;
+		const FVector NewLocation = GetActorLocation() + Direction * Radius;
 		GrapplingSocketWidgetComponent->SetWorldLocation(NewLocation);
 		
 		GrapplingSocketWidgetComponent->SetWorldRotation((Cached_Camera->GetComponentLocation() - GrapplingSocketWidgetComponent->GetComponentLocation()).Rotation());
@@ -111,9 +114,17 @@ float AGrappleSocket::GetDistanceFromAPawn(const APawn* InPawn) const
 
 void AGrappleSocket::AttachToGrappleSocket(APawn* InPawn)
 {
+	if(GEngine)
+	{	
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Grappled onto %s"), *this->GetName()));
+	}
 }
 
 void AGrappleSocket::DetachToGrappleSocket(APawn* InPawn)
 {
+	if(GEngine)
+	{	
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Grappled off from %s"), *this->GetName()));
+	}
 }
 
