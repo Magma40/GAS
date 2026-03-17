@@ -7,11 +7,12 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 
-UGrapplerComponent::UGrapplerComponent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+// Sets default values for this component's properties
+UGrapplerComponent::UGrapplerComponent()
 {
+	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
+	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	SetIsReplicatedByDefault(true);
-	
 	if (APawn* OwnerPawnSearch = Cast<APawn>(GetOwner()))
 	{
 		OwnerPawn = OwnerPawnSearch;
@@ -22,19 +23,19 @@ UGrapplerComponent::UGrapplerComponent(const FObjectInitializer& ObjectInitializ
 		return;
 	}
 	
-	if (IsValid(OwnerPawn) &&  !IsValid(GrappleRope))
+	if (IsValid(OwnerPawn))
 	{
-			GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
-			 USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(OwnerPawn->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-			if (IsValid(SkeletalMeshComponent))
-			{
-				GrappleRope->SetupAttachment(SkeletalMeshComponent);
-				GrappleRope->AttachToComponent(SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
-				GrappleRope->SetAttachEndTo(OwnerPawn, SkeletalMeshComponent->GetFName(), "hand_rSocket");
-				GrappleRope->NumSegments = 0;
-			}
+		USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(OwnerPawn->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+		if (IsValid(SkeletalMeshComponent))
+		{
+			GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("GrapplerRope"));
+			GrappleRope->AttachToComponent(SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
+		}
 	}
+
+	// ...
 }
+
 
 // Called when the game starts
 void UGrapplerComponent::BeginPlay()
@@ -50,30 +51,7 @@ void UGrapplerComponent::BeginPlay()
 		return;
 	}
 	// ...
-	// if (IsValid(OwnerPawn))
-	// {
-	// 	USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(OwnerPawn->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-	// 	if (IsValid(SkeletalMeshComponent))
-	// 	{
-	// 		//GrappleRope = NewObject<UCableComponent>(this, "GrapplerRope");
-	// 		
-	// 		//GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("GrapplerRope"));
-	// 		//GrappleRope = CreateObject
-	// 		if (IsValid(GrappleRope))
-	// 		{
-	// 			//GrappleRope->AttachToComponent(SkeletalMeshComponent, FAttachmentTransformRules::KeepWorldTransform, "hand_rSocket");
-	// 			GrappleRope->SetAttachEndToComponent(SkeletalMeshComponent, "hand_rSocket");
-	//
-	// 			UMaterialInterface* LoadedMaterial = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT( "/Script/Engine.Material'/Engine/MapTemplates/Sky/M_BlackBackground.M_BlackBackground'")));
-	// 			if (LoadedMaterial)
-	// 			{
-	// 				GrappleRope->SetMaterial(0, LoadedMaterial);
-	// 			}
-	// 			GrappleRope->SetRelativeLocation(FVector::ZeroVector);
-	// 			GrappleRope->EndLocation = FVector::ZeroVector;
-	// 		}	
-	// 	}
-	// }
+	
 }
 
 
@@ -151,17 +129,15 @@ void UGrapplerComponent::ConstructGrappleRope() const
 		if (IsValid(SkeletalMeshComponent))
 		{
 			GrappleRope->AttachToComponent(SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
-			GrappleRope->SetAttachEndToComponent(CurrentGrappleSocket->GetRootComponent());
-			//GrappleRope->AttachEndTo.GetComponent()
 			GrappleRope->CableWidth = 5.0f;
-			GrappleRope->NumSegments = 20;
+			GrappleRope->NumSegments = INT_MAX;
 
 			const float CableLength = FVector::Dist(CurrentGrappleSocket->GetActorLocation(), OwnerPawn->GetActorLocation());
 			GrappleRope->CableLength = CableLength;
 
 			GrappleRope->bEnableCollision = true;
 
-			//GrappleRope->EndLocation = CurrentGrappleSocket->GetActorLocation();
+			GrappleRope->EndLocation = CurrentGrappleSocket->GetActorLocation();
 		}
 	}
 	else

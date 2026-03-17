@@ -16,7 +16,7 @@ class GAS_API UGrapplerComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UGrapplerComponent (const FObjectInitializer& ObjectInitializer);
+	UGrapplerComponent();
 
 protected:
 	// Called when the game starts
@@ -40,10 +40,9 @@ public:
 
 	UFUNCTION(BlueprintCallable) void ConstructGrappleRope() const;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Grapple Component") UCableComponent* GrappleRope = nullptr;
-
 private:
 
+	UPROPERTY() UCableComponent* GrappleRope = nullptr;
 	
 	UPROPERTY() AGrappleSocket* CurrentGrappleSocket = nullptr;
 	
