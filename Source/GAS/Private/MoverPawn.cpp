@@ -9,11 +9,6 @@ AMoverPawn::AMoverPawn()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	if(!IsValid(SkeletalMeshComponent)) 
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s:AMoverPawn - SkeletalMeshComponent not found"), *StaticClass()->GetName());
-		return;
-	}
 
 	if (!IsValid(GrapplerComponent))
 	{

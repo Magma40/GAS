@@ -3,12 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
+#include "GameFramework/Character.h"
 #include "MoverPawn.generated.h"
 
 class UGrapplerComponent;
+class USkeletalMeshComponent;
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class GAS_API AMoverPawn : public APawn
 {
 	GENERATED_BODY()
@@ -28,7 +29,5 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MoverPawn") UGrapplerComponent* GrapplerComponent = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MoverPawn") USkeletalMeshComponent* SkeletalMeshComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UGrapplerComponent> GrapplerComponent = nullptr;
 };

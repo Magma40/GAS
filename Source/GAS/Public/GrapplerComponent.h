@@ -17,15 +17,13 @@ class GAS_API UGrapplerComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UGrapplerComponent();
+	UGrapplerComponent(const FObjectInitializer& ObjectInitializer);
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable) bool TryToAttachToGrappleSocket();
 
@@ -43,7 +41,7 @@ public:
 
 private:
 
-	UPROPERTY() UCableComponent* GrappleRope = nullptr;
+	UPROPERTY(VisibleAnywhere, Category = "GrapplerComponent") TObjectPtr<UCableComponent> GrappleRope = nullptr;
 	
 	UPROPERTY() AGrappleSocket* CurrentGrappleSocket = nullptr;
 	

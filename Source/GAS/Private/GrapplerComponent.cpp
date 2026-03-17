@@ -9,13 +9,13 @@
 #include "MoverPawn.h"
 
 // Sets default values for this component's properties
-UGrapplerComponent::UGrapplerComponent()
+UGrapplerComponent::UGrapplerComponent(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-	SetIsReplicatedByDefault(true);
-
+	 PrimaryComponentTick.bCanEverTick = true;
+	// SetIsReplicatedByDefault(true);
+	
 	if (AMoverPawn* OwnerPawnSearch = Cast<AMoverPawn>(GetOwner()))
 	{
 		OwnerPawn = OwnerPawnSearch;
@@ -26,15 +26,12 @@ UGrapplerComponent::UGrapplerComponent()
 		return;
 	}
 	
-	if (IsValid(OwnerPawn) && IsValid(OwnerPawn->SkeletalMeshComponent))
+	if (IsValid(OwnerPawn) && !IsValid(GrappleRope))
 	{
 		OwnerPawn->GrapplerComponent = this;
-		GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
-		GrappleRope->SetupAttachment(OwnerPawn->SkeletalMeshComponent);
-		GrappleRope->AttachToComponent(OwnerPawn->SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
-		GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+		GrappleRope = ObjectInitializer.CreateDefaultSubobject<UCableComponent>(OwnerPawn, TEXT("CableComponent_ROPE"));
+		GrappleRope->SetupAttachment(OwnerPawn->GetRootComponent());
 	}
-	// ...
 }
 
 
@@ -42,26 +39,36 @@ UGrapplerComponent::UGrapplerComponent()
 void UGrapplerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (AMoverPawn* OwnerPawnSearch = Cast<AMoverPawn>(GetOwner()))
+	if (!IsValid(OwnerPawn))
 	{
-		OwnerPawn = OwnerPawnSearch;
+		AMoverPawn* OwnerPawnSearch = Cast<AMoverPawn>(GetOwner());
+		if (IsValid(OwnerPawnSearch))  OwnerPawn = OwnerPawnSearch;
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - GetOwner not found"), *StaticClass()->GetName());
+			return;
+		}
 	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - GetOwner not found"), *StaticClass()->GetName());
-		return;
-	}
-	// ...
+
+	// if (IsValid(GrappleRope))
+	// {
+	// 	// USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(OwnerPawn->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+	// 	// if (IsValid(SkeletalMeshComponent))
+	// 	// {
+	// 	// 	// GrappleRope->AttachToComponent(SkeletalMeshComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
+	// 	// 	// GrappleRope->SetAttachEndTo(OwnerPawn, SkeletalMeshComponent->GetFName(), "hand_rSocket");
+	// 	// 	// GrappleRope->SetRelativeLocation(FVector::ZeroVector);
+	// 	// 	// GrappleRope->EndLocation = FVector::ZeroVector;
+	// 	// 	// GrappleRope->bEnableCollision = false;
+	// 	// 	//
+	// 	// 	// UMaterialInterface* LoadedMaterial = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT( "/Script/Engine.Material'/Engine/MapTemplates/Sky/M_BlackBackground.M_BlackBackground'")));
+	// 	// 	// if (LoadedMaterial)
+	// 	// 	// {
+	// 	// 	// 	GrappleRope->SetMaterial(0, LoadedMaterial);
+	// 	// 	// }
+	// 	// }
+	// }
 	
-}
-
-
-// Called every frame
-void UGrapplerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 bool UGrapplerComponent::TryToAttachToGrappleSocket()
@@ -136,7 +143,7 @@ void UGrapplerComponent::ConstructGrappleRope() const
 			const float CableLength = FVector::Dist(CurrentGrappleSocket->GetActorLocation(), OwnerPawn->GetActorLocation());
 			GrappleRope->CableLength = CableLength;
 
-			GrappleRope->bEnableCollision = true;
+			//GrappleRope->bEnableCollision = true;
 
 			GrappleRope->EndLocation = CurrentGrappleSocket->GetActorLocation();
 		}
