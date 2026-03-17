@@ -6,6 +6,7 @@
 #include "CableComponent.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "MoverPawn.h"
 
 // Sets default values for this component's properties
 UGrapplerComponent::UGrapplerComponent()
@@ -13,7 +14,9 @@ UGrapplerComponent::UGrapplerComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-	if (APawn* OwnerPawnSearch = Cast<APawn>(GetOwner()))
+	SetIsReplicatedByDefault(true);
+
+	if (AMoverPawn* OwnerPawnSearch = Cast<AMoverPawn>(GetOwner()))
 	{
 		OwnerPawn = OwnerPawnSearch;
 	}
@@ -23,16 +26,14 @@ UGrapplerComponent::UGrapplerComponent()
 		return;
 	}
 	
-	if (IsValid(OwnerPawn))
+	if (IsValid(OwnerPawn) && IsValid(OwnerPawn->SkeletalMeshComponent))
 	{
-		USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(OwnerPawn->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-		if (IsValid(SkeletalMeshComponent))
-		{
-			GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("GrapplerRope"));
-			GrappleRope->AttachToComponent(SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
-		}
+		OwnerPawn->GrapplerComponent = this;
+		GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
+		GrappleRope->SetupAttachment(OwnerPawn->SkeletalMeshComponent);
+		GrappleRope->AttachToComponent(OwnerPawn->SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
+		GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
 	}
-
 	// ...
 }
 
@@ -41,7 +42,7 @@ UGrapplerComponent::UGrapplerComponent()
 void UGrapplerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (APawn* OwnerPawnSearch = Cast<APawn>(GetOwner()))
+	if (AMoverPawn* OwnerPawnSearch = Cast<AMoverPawn>(GetOwner()))
 	{
 		OwnerPawn = OwnerPawnSearch;
 	}
@@ -130,7 +131,7 @@ void UGrapplerComponent::ConstructGrappleRope() const
 		{
 			GrappleRope->AttachToComponent(SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
 			GrappleRope->CableWidth = 5.0f;
-			GrappleRope->NumSegments = INT_MAX;
+			GrappleRope->NumSegments = 20;
 
 			const float CableLength = FVector::Dist(CurrentGrappleSocket->GetActorLocation(), OwnerPawn->GetActorLocation());
 			GrappleRope->CableLength = CableLength;

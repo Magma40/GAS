@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "GrapplerComponent.generated.h"
 
+class AMoverPawn;
 class AGrappleSocket;
 class UCableComponent;
 
@@ -46,7 +47,7 @@ private:
 	
 	UPROPERTY() AGrappleSocket* CurrentGrappleSocket = nullptr;
 	
-	UPROPERTY() APawn* OwnerPawn = nullptr;
+	UPROPERTY() AMoverPawn* OwnerPawn = nullptr;
 
 	UPROPERTY() bool bDoingGrapplingAction = false;
 };
