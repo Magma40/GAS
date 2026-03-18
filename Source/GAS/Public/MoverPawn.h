@@ -30,10 +30,13 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	//Grappler Component Reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UGrapplerComponent> GrapplerComponent = nullptr;
 
+	//Skeletal Mesh Component Reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent = nullptr;
 
+	//Capsule Component Reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UCapsuleComponent> CapsuleComponent = nullptr;
 
 };

@@ -76,25 +76,25 @@ void UGrapplerComponent::Init()
 		}
 	}
 
-	if (IsValid(GrappleRope) && IsValid(OwnerPawn->SkeletalMeshComponent))
-	{
-			//GrappleRope->bEnableCollision = false;
-			// GrappleRope->SetCollisionProfileName(TEXT("NoCollision"));
-			// GrappleRope->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		
-			FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, true);
-			GrappleRope->AttachToComponent(OwnerPawn->SkeletalMeshComponent, AttachmentRules, TEXT("hand_rSocket"));
-			GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
-		
-			GrappleRope->SetRelativeLocation(FVector::ZeroVector);
-			GrappleRope->EndLocation = FVector::ZeroVector;
-			
-			UMaterialInterface* LoadedMaterial = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT( "/Script/Engine.Material'/Engine/MapTemplates/Sky/M_BlackBackground.M_BlackBackground'")));
-			if (LoadedMaterial)
-			{
-				GrappleRope->SetMaterial(0, LoadedMaterial);
-			}
-	}
+	// if (IsValid(GrappleRope) && IsValid(OwnerPawn->SkeletalMeshComponent))
+	// {
+	// 		//GrappleRope->bEnableCollision = false;
+	// 		// GrappleRope->SetCollisionProfileName(TEXT("NoCollision"));
+	// 		// GrappleRope->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 	
+	// 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, true);
+	// 		GrappleRope->AttachToComponent(OwnerPawn->SkeletalMeshComponent, AttachmentRules, TEXT("hand_rSocket"));
+	// 		GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+	// 	
+	// 		GrappleRope->SetRelativeLocation(FVector::ZeroVector);
+	// 		GrappleRope->EndLocation = FVector::ZeroVector;
+	// 		
+	// 		UMaterialInterface* LoadedMaterial = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT( "/Script/Engine.Material'/Engine/MapTemplates/Sky/M_BlackBackground.M_BlackBackground'")));
+	// 		if (LoadedMaterial)
+	// 		{
+	// 			GrappleRope->SetMaterial(0, LoadedMaterial);
+	// 		}
+	// }
 }
 
 bool UGrapplerComponent::TryToAttachToGrappleSocket()
