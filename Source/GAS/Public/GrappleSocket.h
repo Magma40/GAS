@@ -61,4 +61,7 @@ public:
 
 	//Able to enable Text in the editor 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") bool bEnableText = true;
+
+	UPROPERTY() USceneComponent* Root = nullptr;
+
 };

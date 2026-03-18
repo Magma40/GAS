@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "MoverPawn.generated.h"
 
@@ -30,4 +31,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UGrapplerComponent> GrapplerComponent = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UCapsuleComponent> CapsuleComponent = nullptr;
+
 };

@@ -22,6 +22,7 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	void Init();
 
 public:	
 
@@ -41,7 +42,7 @@ public:
 
 private:
 
-	UPROPERTY(VisibleAnywhere, Category = "GrapplerComponent") TObjectPtr<UCableComponent> GrappleRope = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<UCableComponent> GrappleRope = nullptr;
 	
 	UPROPERTY() AGrappleSocket* CurrentGrappleSocket = nullptr;
 	

@@ -12,7 +12,7 @@ AGrappleSocket::AGrappleSocket()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//Construct Root Component
-	USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 
 	//Construct A StaticMesh
@@ -30,9 +30,8 @@ AGrappleSocket::AGrappleSocket()
 		StaticMeshComponent->SetStaticMesh(SphereMesh.Object);
 	}
 
-	UGrapplingSocketWidgetComponent* GrapplingSocketWidgetComponentRef  = CreateDefaultSubobject<UGrapplingSocketWidgetComponent>(TEXT("GrapplingSocketWidgetComponent"));
-	GrapplingSocketWidgetComponentRef->SetupAttachment(Root);
-	GrapplingSocketWidgetComponent = GrapplingSocketWidgetComponentRef;
+	GrapplingSocketWidgetComponent  = CreateDefaultSubobject<UGrapplingSocketWidgetComponent>(TEXT("GrapplingSocketWidgetComponent"));
+	GrapplingSocketWidgetComponent->SetupAttachment(Root);
 }
 
 // Called when the game starts or when spawned

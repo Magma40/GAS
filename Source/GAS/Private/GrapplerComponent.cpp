@@ -29,16 +29,31 @@ UGrapplerComponent::UGrapplerComponent(const FObjectInitializer& ObjectInitializ
 	if (IsValid(OwnerPawn) && !IsValid(GrappleRope))
 	{
 		OwnerPawn->GrapplerComponent = this;
-		GrappleRope = ObjectInitializer.CreateDefaultSubobject<UCableComponent>(OwnerPawn, TEXT("CableComponent_ROPE"));
-		GrappleRope->SetupAttachment(OwnerPawn->GetRootComponent());
+		GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent_Rope"));
+		if (IsValid(GrappleRope) && IsValid(OwnerPawn) && IsValid(OwnerPawn->SkeletalMeshComponent))
+		{
+			// GrappleRope->bEnableCollision = false;
+			// GrappleRope->SetCollisionProfileName(TEXT("NoCollision"));
+			// GrappleRope->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+			FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, false);
+			GrappleRope->AttachToComponent(OwnerPawn->SkeletalMeshComponent, AttachmentRules, "hand_rSocket");
+			GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+		}
 	}
 }
-
 
 // Called when the game starts
 void UGrapplerComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	FTimerHandle TimerHandle;
+
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UGrapplerComponent::Init, 1.0f, false, 2.0f);
+}
+
+void UGrapplerComponent::Init()
+{
 	if (!IsValid(OwnerPawn))
 	{
 		AMoverPawn* OwnerPawnSearch = Cast<AMoverPawn>(GetOwner());
@@ -49,26 +64,37 @@ void UGrapplerComponent::BeginPlay()
 			return;
 		}
 	}
-
-	// if (IsValid(GrappleRope))
-	// {
-	// 	// USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(OwnerPawn->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-	// 	// if (IsValid(SkeletalMeshComponent))
-	// 	// {
-	// 	// 	// GrappleRope->AttachToComponent(SkeletalMeshComponent, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
-	// 	// 	// GrappleRope->SetAttachEndTo(OwnerPawn, SkeletalMeshComponent->GetFName(), "hand_rSocket");
-	// 	// 	// GrappleRope->SetRelativeLocation(FVector::ZeroVector);
-	// 	// 	// GrappleRope->EndLocation = FVector::ZeroVector;
-	// 	// 	// GrappleRope->bEnableCollision = false;
-	// 	// 	//
-	// 	// 	// UMaterialInterface* LoadedMaterial = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT( "/Script/Engine.Material'/Engine/MapTemplates/Sky/M_BlackBackground.M_BlackBackground'")));
-	// 	// 	// if (LoadedMaterial)
-	// 	// 	// {
-	// 	// 	// 	GrappleRope->SetMaterial(0, LoadedMaterial);
-	// 	// 	// }
-	// 	// }
-	// }
 	
+	if (!IsValid(GrappleRope) && IsValid(OwnerPawn->SkeletalMeshComponent))
+	{
+		UCableComponent* GrappleRopeSearch = Cast<UCableComponent>(OwnerPawn->GetComponentByClass<UCableComponent>());
+		if (IsValid(GrappleRopeSearch)) GrappleRope = GrappleRopeSearch;
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - GrappleRope not found"), *StaticClass()->GetName());
+			return;
+		}
+	}
+
+	if (IsValid(GrappleRope) && IsValid(OwnerPawn->SkeletalMeshComponent))
+	{
+			//GrappleRope->bEnableCollision = false;
+			// GrappleRope->SetCollisionProfileName(TEXT("NoCollision"));
+			// GrappleRope->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		
+			FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, true);
+			GrappleRope->AttachToComponent(OwnerPawn->SkeletalMeshComponent, AttachmentRules, TEXT("hand_rSocket"));
+			GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+		
+			GrappleRope->SetRelativeLocation(FVector::ZeroVector);
+			GrappleRope->EndLocation = FVector::ZeroVector;
+			
+			UMaterialInterface* LoadedMaterial = Cast<UMaterialInterface>(StaticLoadObject(UMaterialInterface::StaticClass(), nullptr, TEXT( "/Script/Engine.Material'/Engine/MapTemplates/Sky/M_BlackBackground.M_BlackBackground'")));
+			if (LoadedMaterial)
+			{
+				GrappleRope->SetMaterial(0, LoadedMaterial);
+			}
+	}
 }
 
 bool UGrapplerComponent::TryToAttachToGrappleSocket()
@@ -92,7 +118,10 @@ void UGrapplerComponent::DeattachFromGrappleSocket()
 		bDoingGrapplingAction = false;
 		CurrentGrappleSocket->DetachToGrappleSocket(OwnerPawn);
 		CurrentGrappleSocket = nullptr;
-		GrappleRope->NumSegments = 0;
+
+		GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+		GrappleRope->CableLength = 100.0f;
+
 	}
 }
 
@@ -131,22 +160,20 @@ AGrappleSocket* UGrapplerComponent::FindClosestGrappleSocket() const
 
 void UGrapplerComponent::ConstructGrappleRope() const
 {
-	if (IsValid(GrappleRope) && IsValid(OwnerPawn) && IsValid(CurrentGrappleSocket))
+	if (IsValid(GrappleRope) && IsValid(OwnerPawn) && IsValid(CurrentGrappleSocket) && IsValid(OwnerPawn->SkeletalMeshComponent))
 	{
-		USkeletalMeshComponent* SkeletalMeshComponent = Cast<USkeletalMeshComponent>(OwnerPawn->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-		if (IsValid(SkeletalMeshComponent))
-		{
-			GrappleRope->AttachToComponent(SkeletalMeshComponent , FAttachmentTransformRules::SnapToTargetNotIncludingScale, "hand_rSocket");
 			GrappleRope->CableWidth = 5.0f;
-			GrappleRope->NumSegments = 20;
+			//GrappleRope->NumSegments = 20;
 
-			const float CableLength = FVector::Dist(CurrentGrappleSocket->GetActorLocation(), OwnerPawn->GetActorLocation());
-			GrappleRope->CableLength = CableLength;
+			const FTransform Xform = GrappleRope->GetComponentTransform();
+			FVector RelativeLocationToGrappleSocket = Xform.InverseTransformPosition(CurrentGrappleSocket->Root->GetComponentLocation());
+			 //const float CableLength = FVector::Dist(RelativeLocationToGrappleSocket, OwnerPawn->GetActorLocation());
+			 GrappleRope->CableLength = RelativeLocationToGrappleSocket.Size();
 
 			//GrappleRope->bEnableCollision = true;
 
-			GrappleRope->EndLocation = CurrentGrappleSocket->GetActorLocation();
-		}
+			//GrappleRope->EndLocation = CurrentGrappleSocket->GetActorLocation();
+			GrappleRope->SetAttachEndTo(CurrentGrappleSocket, CurrentGrappleSocket->Root->GetFName());
 	}
 	else
 	{
