@@ -17,7 +17,7 @@ class GAS_API UGrapplerComponent : public UActorComponent
 
 public:	
 	// Sets default values for this component's properties
-	UGrapplerComponent(const FObjectInitializer& ObjectInitializer);
+	UGrapplerComponent();
 
 protected:
 	// Called when the game starts

@@ -119,7 +119,7 @@ void AGrappleSocket::AttachToGrappleSocket(APawn* InPawn)
 	}
 }
 
-void AGrappleSocket::DetachToGrappleSocket(APawn* InPawn)
+void AGrappleSocket::DetachFromGrappleSocket(APawn* InPawn)
 {
 	if(GEngine)
 	{	

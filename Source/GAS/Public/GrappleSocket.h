@@ -38,7 +38,7 @@ public:
 	void AttachToGrappleSocket(APawn* InPawn);
 
 	//Deattaches a pawn and its grappler from this socket
-	void DetachToGrappleSocket(APawn* InPawn);
+	void DetachFromGrappleSocket(APawn* InPawn);
 	
 private:
 	//Player pawn Reference
