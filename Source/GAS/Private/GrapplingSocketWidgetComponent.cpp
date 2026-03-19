@@ -57,8 +57,16 @@ void UGrapplingSocketWidgetComponent::SetWidgetImageVisibility(const bool Visibi
 	}
 	
 	UImage* ImageReference = GrapplingSocketWidget->GetImage();
-	if (Visibility) ImageReference->SetVisibility(ESlateVisibility::Visible);
-	else ImageReference->SetVisibility(ESlateVisibility::Hidden);
+	if (IsValid(ImageReference))
+	{
+		if (Visibility) ImageReference->SetVisibility(ESlateVisibility::Visible);
+		else ImageReference->SetVisibility(ESlateVisibility::Hidden);	
+	}
+	else
+	{
+			UE_LOG(LogTemp, Error, TEXT("%s:SetWidgetImageVisibility - ImageReference not found"), *StaticClass()->GetName());
+			return;
+	}
 }
 
 void UGrapplingSocketWidgetComponent::SetWidgetTextVisibility(const bool Visibility)
@@ -77,10 +85,18 @@ void UGrapplingSocketWidgetComponent::SetWidgetTextVisibility(const bool Visibil
 		GrapplingSocketWidget->RebuildWidget();
 		return;
 	}
-	
+
 	UTextBlock* TextReference = GrapplingSocketWidget->GetText();
-	if (Visibility) TextReference->SetVisibility(ESlateVisibility::Visible);
-	else TextReference->SetVisibility(ESlateVisibility::Hidden);
+	if (IsValid(TextReference))
+	{
+		if (Visibility) TextReference->SetVisibility(ESlateVisibility::Visible);
+		else TextReference->SetVisibility(ESlateVisibility::Hidden);	
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s:SetWidgetTextVisibility - TextReference not found"), *StaticClass()->GetName());
+		return;
+	}
 }
 
 void UGrapplingSocketWidgetComponent::SetText(const FName& NewText) const

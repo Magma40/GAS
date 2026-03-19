@@ -96,21 +96,31 @@
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://2" root0="FORCE_HIGHLIGHTING" />
-    <setting file="cidr-memory-view://3" root0="FORCE_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///dummy.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="cidr-memory-view://12" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Plugins/Animation/MotionWarping/Source/MotionWarping/Public/MotionWarpingComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Plugins/Experimental/Mover/Source/Mover/Public/DefaultMovementSet/CharacterMoverComponent.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Math/TransformVectorized.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/CoreUObject/Public/UObject/Object.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/CoreUObject/Public/UObject/UObjectBase.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/CoreUObject/Public/UObject/UObjectBaseUtility.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/Components/CapsuleComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/Components/InputComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/Components/MeshComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/Components/PrimitiveComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/Components/ShapeComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/Components/SphereComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/Engine/BlueprintGeneratedClass.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/GameFramework/Actor.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Engine/Classes/GameFramework/Pawn.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/UMG/Private/Components/WidgetComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/UMG/Private/UserWidget.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/UMG/Public/Blueprint/WidgetBlueprintGeneratedClass.h" root0="FORCE_HIGHLIGHTING" />
@@ -288,7 +298,7 @@
       <workItem from="1773841674019" duration="9668000" />
       <workItem from="1773851680913" duration="2364000" />
       <workItem from="1773906182858" duration="4379000" />
-      <workItem from="1773913008302" duration="4699000" />
+      <workItem from="1773913008302" duration="23994000" />
     </task>
     <servers />
   </component>

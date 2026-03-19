@@ -23,6 +23,8 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
 	//Function for getting necessary references
 	void Init();
 
@@ -54,11 +56,20 @@ private:
 	//Grapple Rope Reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<UCableComponent> GrappleRope = nullptr;
 
+	//A maximum value which the Grappler Rope can get
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) float MaxGrapplerRopeLength  = 0.0f;
+
+	//An extra value to add or remove length to get a nice proper length on the Grapple Rope
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) float GrapplerRopeExtraShaveOffFromOrAddToLength  = 0.0f;;
+
+	//Cached Default Rope Length
+	UPROPERTY() float CachedDefaultRopeLength = 0.0f;
+	
 	//Current Grapple Socket Reference
-	UPROPERTY() AGrappleSocket* CurrentGrappleSocket = nullptr;
+	UPROPERTY() TObjectPtr<AGrappleSocket> CurrentGrappleSocket = nullptr;
 
 	//Owner Pawn Reference
-	UPROPERTY() AMoverPawn* OwnerPawn = nullptr;
+	UPROPERTY() TObjectPtr<AMoverPawn> OwnerPawn = nullptr;
 
 	//Bool for checking if Pawn doing Grappling Action
 	UPROPERTY() bool bDoingGrapplingAction = false;

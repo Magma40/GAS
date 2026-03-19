@@ -56,7 +56,7 @@ public:
 private:
 
 	//GrapplingSocketWidget Reference
-	UPROPERTY() UGrapplingSocketWidget* GrapplingSocketWidget = nullptr;
+	UPROPERTY() TObjectPtr<UGrapplingSocketWidget> GrapplingSocketWidget = nullptr;
 
 	//Cached Transfer Settings for updating the widget
 	FTransferSettings TransferSettings = FTransferSettings();
@@ -97,16 +97,16 @@ public:
 	
 private:
 	//Reference to GrapplingSocketWidgetComponent(who owns this UserWidget), this is a solution because I cant get component from UserWidget
-	UPROPERTY() UGrapplingSocketWidgetComponent* GrapplingSocketWidgetComponent = nullptr;
+	UPROPERTY() TObjectPtr<UGrapplingSocketWidgetComponent> GrapplingSocketWidgetComponent = nullptr;
 	
 	//Canvas Reference
-	UPROPERTY() UCanvasPanel* CanvasPanel = nullptr;
+	UPROPERTY() TObjectPtr<UCanvasPanel> CanvasPanel = nullptr;
 
 	//Image Reference
-	UPROPERTY() UImage* Image = nullptr;
+	UPROPERTY() TObjectPtr<UImage> Image = nullptr;
 
 	//Text Block Reference
-	UPROPERTY() UTextBlock* Text = nullptr;
+	UPROPERTY() TObjectPtr<UTextBlock> Text = nullptr;
 
 	//Default Text for Text Block Reference
 	UPROPERTY() FName  DefaultTextToSay = TEXT("Press Left Click To Grapple!");

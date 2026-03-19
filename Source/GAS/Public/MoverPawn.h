@@ -9,6 +9,7 @@
 
 class UGrapplerComponent;
 class USkeletalMeshComponent;
+class UInputAction;
 
 UCLASS(Blueprintable, BlueprintType)
 class GAS_API AMoverPawn : public APawn
@@ -30,6 +31,9 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	//Get Move Action
+	UInputAction* GetMoveAction() const { return MoveAction; }
+
 	//Grappler Component Reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UGrapplerComponent> GrapplerComponent = nullptr;
 
@@ -39,4 +43,6 @@ public:
 	//Capsule Component Reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UCapsuleComponent> CapsuleComponent = nullptr;
 
+	//Move Action Input Reference
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UInputAction> MoveAction = nullptr;
 };

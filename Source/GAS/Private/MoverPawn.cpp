@@ -46,6 +46,5 @@ void AMoverPawn::Tick(float DeltaTime)
 void AMoverPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
 }
 

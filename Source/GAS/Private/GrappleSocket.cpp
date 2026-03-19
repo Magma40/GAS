@@ -4,6 +4,10 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "EnhancedInputComponent.h"
+#include "MoverPawn.h"
+#include "CableComponent.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AGrappleSocket::AGrappleSocket()
@@ -32,6 +36,17 @@ AGrappleSocket::AGrappleSocket()
 
 	GrapplingSocketWidgetComponent  = CreateDefaultSubobject<UGrapplingSocketWidgetComponent>(TEXT("GrapplingSocketWidgetComponent"));
 	GrapplingSocketWidgetComponent->SetupAttachment(Root);
+
+	GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
+	if (IsValid(GrappleRope) && IsValid(Root))
+	{
+		const FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, false);
+		GrappleRope->AttachToComponent(Root, AttachmentRules);
+
+		GrappleEdgeComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("GrappleCapsuleComponent"));
+		GrappleEdgeComponent->AttachToComponent(GrappleRope , AttachmentRules, "CableEnd");
+		//GrappleRope->SetAttachEndTo(this, GrappleEdgeComponent->GetFName());
+	}
 }
 
 // Called when the game starts or when spawned
@@ -41,7 +56,7 @@ void AGrappleSocket::BeginPlay()
 
 	//Try to get the PlayerPawn in the world
 	APawn* PlayerSearch = GetWorld()->GetFirstPlayerController()->GetPawn();
-	if (IsValid(PlayerSearch)) Cached_PlayerPawn = PlayerSearch;
+	if (IsValid(PlayerSearch)) Cached_PlayerPawn = Cast<AMoverPawn>(PlayerSearch);
 	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - Cached_PlayerPawn not found"), *StaticClass()->GetName());
@@ -55,6 +70,29 @@ void AGrappleSocket::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - Cached_Camera not found"), *StaticClass()->GetName());
 		return;
 	}
+
+	//Try to get the Pawn's Player Controller
+	const APlayerController* PC = Cast<APlayerController>(Cached_PlayerPawn->GetController());
+	if (!IsValid(PC))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - Player Controller not found"), *StaticClass()->GetName());
+		return;
+	}
+	
+	//Try to get the Player Controller's Enhanced Input Component
+	UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PC->InputComponent);
+	if (!IsValid(Input))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - Input not found"), *StaticClass()->GetName());
+		return;
+	}
+
+	//Bind so every time the player moves, it should update the widget
+	Input->BindAction(Cached_PlayerPawn->GetMoveAction(), ETriggerEvent::Triggered, this, &AGrappleSocket::UpdateWidget);
+
+	//Apply the visibility if they are not correct
+	GrapplingSocketWidgetComponent->SetWidgetImageVisibility(bEnableImage);
+	GrapplingSocketWidgetComponent->SetWidgetTextVisibility(bEnableText);
 }
 
 void AGrappleSocket::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -76,10 +114,8 @@ void AGrappleSocket::PostEditChangeProperty(struct FPropertyChangedEvent& Proper
 	}
 }
 
-// Called every frame
-void AGrappleSocket::Tick(float DeltaTime)
+void AGrappleSocket::UpdateWidget()
 {
-	Super::Tick(DeltaTime);
 	if(!IsValid(Cached_PlayerPawn) || !IsValid(GrapplingSocketWidgetComponent) || !IsValid(Cached_Camera) || !IsValid(StaticMeshComponent)) return;
 	if(IsInRangeToGrapple(Cached_PlayerPawn))
 	{
@@ -113,6 +149,7 @@ float AGrappleSocket::GetDistanceFromAPawn(const APawn* InPawn) const
 
 void AGrappleSocket::AttachToGrappleSocket(APawn* InPawn)
 {
+	GrapplingSocketWidgetComponent->SetWidgetVisibility(false);
 	if(GEngine)
 	{	
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Grappled onto %s"), *this->GetName()));
@@ -121,6 +158,7 @@ void AGrappleSocket::AttachToGrappleSocket(APawn* InPawn)
 
 void AGrappleSocket::DetachFromGrappleSocket(APawn* InPawn)
 {
+	GrapplingSocketWidgetComponent->SetWidgetVisibility(true);
 	if(GEngine)
 	{	
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Grappled off from %s"), *this->GetName()));

@@ -8,9 +8,9 @@ public class GAS : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "Mover" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "CableComponent" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "CableComponent", });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

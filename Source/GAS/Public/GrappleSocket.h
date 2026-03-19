@@ -8,6 +8,9 @@
 
 class UCameraComponent;
 class UGrapplingSocketWidgetComponent;
+class AMoverPawn;
+class UCableComponent;
+class UCapsuleComponent;
 
 UCLASS()
 class GAS_API AGrappleSocket : public AActor
@@ -25,8 +28,9 @@ protected:
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+
+	//Updates the widget position and rotation
+ 	void UpdateWidget();
 
 	//Checks if a pawn is close enough to be able to grapple onto this socket
 	bool IsInRangeToGrapple(const APawn* InPawn) const;
@@ -42,15 +46,15 @@ public:
 	
 private:
 	//Player pawn Reference
-	UPROPERTY() APawn* Cached_PlayerPawn = nullptr;
+	UPROPERTY() TObjectPtr<AMoverPawn> Cached_PlayerPawn = nullptr;
 
 	//Camera Actor Reference
-	UPROPERTY() UCameraComponent* Cached_Camera = nullptr;
+	UPROPERTY() TObjectPtr<UCameraComponent> Cached_Camera = nullptr;
 
-	UPROPERTY() UStaticMeshComponent* StaticMeshComponent = nullptr;
+	UPROPERTY() TObjectPtr<UStaticMeshComponent> StaticMeshComponent = nullptr;
 	
 	//Grappling Socket Widget Component Reference
-	UPROPERTY()  UGrapplingSocketWidgetComponent* GrapplingSocketWidgetComponent = nullptr;
+	UPROPERTY()  TObjectPtr<UGrapplingSocketWidgetComponent> GrapplingSocketWidgetComponent = nullptr;
 
 public:
 	//Able to change Min Distance To Grapple in the editor
@@ -63,5 +67,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") bool bEnableText = true;
 
 	//Root Component Reference
-	UPROPERTY() USceneComponent* Root = nullptr;
+	UPROPERTY() TObjectPtr<USceneComponent> Root = nullptr;
+
+	//Grapple Rope Reference
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<UCableComponent> GrappleRope = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<UCapsuleComponent>  GrappleEdgeComponent= nullptr;
 };
