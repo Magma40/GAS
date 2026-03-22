@@ -1,6 +1,4 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "MoverPawn.h"
 #include "GrapplerComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -11,21 +9,46 @@ AMoverPawn::AMoverPawn()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//Destroy Components for reconstruction
+	//Destroy Capsule Component
+	UCapsuleComponent* CapsuleComponentFound = GetComponentByClass<UCapsuleComponent>();
+	if (IsValid(CapsuleComponentFound))
+	{
+		CapsuleComponentFound->DestroyComponent();	
+	}
+
+	//Destroy Skeletal Mesh Component
+	USkeletalMeshComponent* SkeletalMeshComponentFound = GetComponentByClass<USkeletalMeshComponent>();
+	if (IsValid(SkeletalMeshComponentFound))
+	{
+		SkeletalMeshComponentFound->DestroyComponent();	
+	}
+
+	//Destroy GrapplerComponent
+	UGrapplerComponent* GrapplerComponentFound = GetComponentByClass<UGrapplerComponent>();
+	if (IsValid(GrapplerComponentFound))
+	{
+		GrapplerComponentFound->DestroyComponent();	
+	}
+	
 	//Construct Capsule Component Reference for safer getting outside this script
 	//This needs to be root for Pawn Movement and collision to work properly
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
 	SetRootComponent(CapsuleComponent);
-
-	//Construct Skeletal Mesh Component Reference for safer getting outside this script
-	SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
-	if (IsValid(SkeletalMeshComponent))
-	{
-		SkeletalMeshComponent->SetupAttachment(CapsuleComponent);
-	}
+	
+	 //Construct Skeletal Mesh Component Reference for safer getting outside this script
+	 SkeletalMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
+	 if (IsValid(SkeletalMeshComponent))
+	 {
+	 	SkeletalMeshComponent->SetupAttachment(CapsuleComponent);
+	 }
 
 	//Construct Grappler Component Reference for safer getting outside this script, and for safe keeping
 	GrapplerComponent = CreateDefaultSubobject<UGrapplerComponent>(TEXT("GrapplerComponent"));
-	AddOwnedComponent(GrapplerComponent);	
+	AddOwnedComponent(GrapplerComponent);
+
+	//Debug log that the object has been constructed
+	UE_LOG(LogTemp, Warning, TEXT("%s:AMoverPawn - %s Constructed:"), *StaticClass()->GetName(), *this->GetName());
 }
 
 // Called when the game starts or when spawned

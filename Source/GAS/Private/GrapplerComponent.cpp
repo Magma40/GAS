@@ -1,14 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "GrapplerComponent.h"
 #include "GrappleSocket.h"
 #include "CableComponent.h"
-#include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "MoverPawn.h"
 #include "Components/CapsuleComponent.h"
-//#include "CharacterMoverComponent.h"
 
 // Sets default values for this component's properties
 UGrapplerComponent::UGrapplerComponent()
@@ -25,22 +21,29 @@ UGrapplerComponent::UGrapplerComponent()
 		UE_LOG(LogTemp, Error, TEXT("%s:UGrapplerComponent - GetOwner() not found"), *StaticClass()->GetName());
 		return;
 	}
-
+	
+	//Destroy Components for reconstruction
+	UCableComponent* CableComponent = OwnerPawnSearch->GetComponentByClass<UCableComponent>();
+	if (IsValid(CableComponent))
+	{
+		CableComponent->DestroyComponent();	
+	}
+	
 	//Checks if everything is valid before constructing a Cable Component
 	//this construction can be quite buggy, in most cases you can continue if you hit a "crash breakpoint"
 	if (IsValid(OwnerPawnSearch) && !IsValid(GrappleRope))
 	{
 		//Safety set reference, this might not be necessary
 		OwnerPawnSearch->GrapplerComponent = this;
-
+	
 		//Constructs the Cable Component
 		GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent_Rope"));
-		if (IsValid(GrappleRope) && IsValid(OwnerPawn) && IsValid(OwnerPawn->SkeletalMeshComponent))
+		if (IsValid(GrappleRope) && IsValid(OwnerPawnSearch) && IsValid(OwnerPawnSearch->SkeletalMeshComponent))
 		{
 			//Attaches the Grapple Component to the Owners Skeletal Mesh Components sockets, in this case the right hand
 			const FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, false);
-			GrappleRope->AttachToComponent(OwnerPawn->SkeletalMeshComponent, AttachmentRules, "hand_rSocket");
-			GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+			GrappleRope->AttachToComponent(OwnerPawnSearch->SkeletalMeshComponent, AttachmentRules, "hand_rSocket");
+			GrappleRope->SetAttachEndTo(OwnerPawnSearch, OwnerPawnSearch->SkeletalMeshComponent->GetFName(), "hand_rSocket");
 		}
 		else
 		{
@@ -54,11 +57,13 @@ UGrapplerComponent::UGrapplerComponent()
 				*StaticClass()->GetName(),
 				GrappleRope ? *GrappleRope->GetName() : TEXT("nullptr"),
 				OwnerPawnSearch ? *OwnerPawnSearch->GetName() : TEXT("nullptr"),
-				(OwnerPawn && OwnerPawn->SkeletalMeshComponent) ? *OwnerPawn->SkeletalMeshComponent->GetName() : TEXT("nullptr")
+				(OwnerPawnSearch && OwnerPawnSearch->SkeletalMeshComponent) ? *OwnerPawnSearch->SkeletalMeshComponent->GetName() : TEXT("nullptr")
 			);
 			return;
 		}
 	}
+	//Debug log that the object has been constructed
+	UE_LOG(LogTemp, Warning, TEXT("%s:UGrapplerComponent - %s Constructed:"), *StaticClass()->GetName(), *this->GetName());
 }
 
 // Called when the game starts

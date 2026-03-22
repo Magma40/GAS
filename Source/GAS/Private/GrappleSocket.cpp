@@ -2,8 +2,6 @@
 #include "GrappleSocket.h"
 #include "GrapplingSocketWidgetComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Components/SphereComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "EnhancedInputComponent.h"
 #include "MoverPawn.h"
 #include "CableComponent.h"
@@ -15,38 +13,120 @@ AGrappleSocket::AGrappleSocket()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	//Destroy Components for reconstruction
+	//Destroy Root Component
+	USceneComponent* RootComponentFound = GetComponentByClass<USceneComponent>();
+	if (IsValid(RootComponentFound))
+	{
+		RootComponentFound->DestroyComponent();	
+	}
+
+	//Destroy Static Mesh Component
+	UStaticMeshComponent* StaticMeshComponentFound = GetComponentByClass<UStaticMeshComponent>();
+	if (IsValid(StaticMeshComponentFound))
+	{
+		StaticMeshComponentFound->DestroyComponent();	
+	}
+
+	//Destroy Grappler Socket Widget Component
+	UGrapplingSocketWidgetComponent* GrapplingSocketWidgetComponentFound = GetComponentByClass<UGrapplingSocketWidgetComponent>();
+	if (IsValid(GrapplingSocketWidgetComponentFound))
+	{
+		GrapplingSocketWidgetComponentFound->DestroyComponent();	
+	}
+	
+	//Destroy Cable Component
+	UCableComponent* CableComponentFound = GetComponentByClass<UCableComponent>();
+	if (IsValid(CableComponentFound))
+	{
+		CableComponentFound->DestroyComponent();	
+	}
+
+	//Destroy Capsule Component
+	UCapsuleComponent* CapsuleComponentFound = GetComponentByClass<UCapsuleComponent>();
+	if (IsValid(CapsuleComponentFound))
+	{
+		CapsuleComponentFound->DestroyComponent();	
+	}
+
 	//Construct Root Component
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	SetRootComponent(Root);
-
+	if (IsValid(Root))
+	{
+		SetRootComponent(Root);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: AGrappleSocket - Root is not valid"),*StaticClass()->GetName());
+		return;
+	}
 	//Construct A StaticMesh
 	StaticMeshComponent= CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	StaticMeshComponent->SetupAttachment(Root);
 	StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	StaticMeshComponent->SetHiddenInGame(false);
 
-	//Try to find Unreal's default Sphere shape inside engine folders
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
-
-	//If found Unreal's default Sphere shape, apply it to the constructed static mesh 
-	if (SphereMesh.Succeeded())
+	if (!IsValid(StaticMeshComponent))
 	{
-		StaticMeshComponent->SetStaticMesh(SphereMesh.Object);
+		UE_LOG(LogTemp, Error, TEXT("%s: AGrappleSocket - StaticMeshComponent is not valid"),*StaticClass()->GetName());
+		return;
 	}
-
+	//if (IsValid(StaticMeshRef)) StaticMeshComponent->SetStaticMesh(StaticMeshRef);
+	
+	
+	//Try to find Unreal's default Sphere shape inside engine folders
+	 static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereMesh(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+	
+	 //If found Unreal's default Sphere shape, apply it to the constructed static mesh 
+	 if (SphereMesh.Succeeded())
+	 {
+	 	StaticMeshComponent->SetStaticMesh(SphereMesh.Object);
+	 }
+	 else
+	 {
+	 	UE_LOG(LogTemp, Error, TEXT("%s: AGrappleSocket - SphereMesh is not valid"),*StaticClass()->GetName());
+	 	//return;
+	 }
+	
 	GrapplingSocketWidgetComponent  = CreateDefaultSubobject<UGrapplingSocketWidgetComponent>(TEXT("GrapplingSocketWidgetComponent"));
-	GrapplingSocketWidgetComponent->SetupAttachment(Root);
+	if (IsValid(GrapplingSocketWidgetComponent))
+	{
+		GrapplingSocketWidgetComponent->SetupAttachment(Root);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: AGrappleSocket - GrapplingSocketWidgetComponent is not valid"),*StaticClass()->GetName());
+		return;
+	}
+	
 
 	GrappleRope = CreateDefaultSubobject<UCableComponent>(TEXT("CableComponent"));
 	if (IsValid(GrappleRope) && IsValid(Root))
 	{
 		const FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, false);
 		GrappleRope->AttachToComponent(Root, AttachmentRules);
-
+	
 		GrappleEdgeComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("GrappleCapsuleComponent"));
 		GrappleEdgeComponent->AttachToComponent(GrappleRope , AttachmentRules, "CableEnd");
 		//GrappleRope->SetAttachEndTo(this, GrappleEdgeComponent->GetFName());
 	}
+	else
+	{
+		//Debug logs the invalid components which prevented construction
+		UE_LOG(LogTemp, Error,
+			TEXT("%s: AGrappleSocket - Invalid components:\n")
+			TEXT("  GrappleRope: %s\n")
+			TEXT("  Root: %s\n"),
+			    
+			*StaticClass()->GetName(),
+			GrappleRope ? *GrappleRope->GetName() : TEXT("nullptr"),
+			Root ? *Root->GetName() : TEXT("nullptr")
+		);
+		return;
+	}
+	
+	//Debug log that the object has been constructed
+	UE_LOG(LogTemp, Warning, TEXT("%s:AGrappleSocket - %s Constructed:"), *StaticClass()->GetName(), *this->GetName());
 }
 
 // Called when the game starts or when spawned
