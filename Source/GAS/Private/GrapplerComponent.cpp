@@ -157,9 +157,12 @@ void UGrapplerComponent::DeattachFromGrappleSocket()
 
 		//Dereference the Grapple Socket pawn was attached to
 		CurrentGrappleSocket = nullptr;
+		
+		const FDetachmentTransformRules AttachmentRules(FDetachmentTransformRules::KeepWorldTransform);
+		OwnerPawn ->DetachFromActor(AttachmentRules); //  ->DetachFromComponent(AttachmentRules);
 
 		//Reattach the Grapple Rope to the player
-		GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+		//GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
 
 		//Set the Grapple Rope's length to a reasonable value
 		GrappleRope->CableLength = CachedDefaultRopeLength;
