@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "MoverPawn.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values for this component's properties
 UGrapplerComponent::UGrapplerComponent()
@@ -82,11 +83,13 @@ void UGrapplerComponent::TickComponent(float DeltaTime, enum ELevelTick TickType
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (IsValid(CurrentGrappleSocket))
 	{
+		OwnerPawn->SetActorRelativeLocation(FVector::ZeroVector);
 		if (!CurrentGrappleSocket->IsInRangeToGrapple(OwnerPawn) || CurrentGrappleSocket->GetDistanceFromAPawn(OwnerPawn)  > MaxGrapplerRopeLength)
 		{
-			DeattachFromGrappleSocket();
+			DetachFromGrappleSocket();
 		}
 	}
+	
 }
 
 //NOTE: I Attach the Grappler Rope to the Skeletal Mesh Component through blueprint (Mover.SandboxCharacter_Mover - BeginPlay Event)
@@ -130,12 +133,7 @@ bool UGrapplerComponent::TryToAttachToGrappleSocket()
 	bDoingGrapplingAction = true;
 
 	//Construct a rope based on the found Grapple Socket
-	//ConstructGrappleRope();
-	const FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, false);
-	OwnerPawn->CapsuleComponent->AttachToComponent(CurrentGrappleSocket->GrappleEdgeComponent, AttachmentRules);
-	OwnerPawn->CapsuleComponent->SetRelativeLocation(FVector::ZeroVector);
-	//UCharacterMoverComponent* CharacterMovementComponent = OwnerPawn->GetComponentByClass<UCharacterMoverComponent>();
-	//if (IsValid(CharacterMovementComponent)) CharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Flying);
+	ConstructGrappleRope();
 
 	//Attach the pawn to the Grapple Socket
 	CurrentGrappleSocket->AttachToGrappleSocket(OwnerPawn);
@@ -144,7 +142,7 @@ bool UGrapplerComponent::TryToAttachToGrappleSocket()
 	return true;
 }
 
-void UGrapplerComponent::DeattachFromGrappleSocket()
+void UGrapplerComponent::DetachFromGrappleSocket()
 {
 	//If pawn is attached to a Grapple Socket, deattach from it
 	if (IsValid(CurrentGrappleSocket) && IsValid(GrappleRope))
@@ -152,15 +150,18 @@ void UGrapplerComponent::DeattachFromGrappleSocket()
 		//Disable Grapple Action
 		bDoingGrapplingAction = false;
 
+		DetachPawnFromGrappleSocket();
+		if (IsValid(CurrentGrappleSocket) && IsValid(CurrentGrappleSocket->GrappleRope))
+		{
+			CurrentGrappleSocket->GrappleRope->SetVisibility(false);
+		}
+
 		//Deattach the pawn from the Grapple Socket
 		CurrentGrappleSocket->DetachFromGrappleSocket(OwnerPawn);
 
 		//Dereference the Grapple Socket pawn was attached to
 		CurrentGrappleSocket = nullptr;
 		
-		const FDetachmentTransformRules AttachmentRules(FDetachmentTransformRules::KeepWorldTransform);
-		OwnerPawn ->DetachFromActor(AttachmentRules); //  ->DetachFromComponent(AttachmentRules);
-
 		//Reattach the Grapple Rope to the player
 		//GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
 
@@ -209,20 +210,78 @@ AGrappleSocket* UGrapplerComponent::FindClosestGrappleSocket() const
 	return ClosestGrappleSocket;
 }
 
+void UGrapplerComponent::AttachPawnToGrappleSocket() const
+{
+	if (IsValid(OwnerPawn) && IsValid(OwnerPawn->CapsuleComponent) && IsValid(CurrentGrappleSocket) && IsValid(CurrentGrappleSocket->GrappleEdgeComponent))
+	{
+		const FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepRelative, false);
+		OwnerPawn->CapsuleComponent->AttachToComponent(CurrentGrappleSocket->GrappleEdgeComponent, AttachmentRules);
+		OwnerPawn->CapsuleComponent->SetRelativeLocation(FVector::ZeroVector);
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UGrapplerComponent::EnableGrappling, 1.0f, false, 0.5f);
+	}
+	else
+	{
+		//Debug the components that return nullptr
+		UE_LOG(LogTemp, Error,
+			TEXT("%s: AttachPawnToGrappleSocket - Invalid components:\n")
+			TEXT("  OwnerPawn: %s\n")
+			TEXT("  OwnerPawn->CapsuleComponent: %s\n")
+			TEXT("  CurrentGrappleSocket: %s\n")
+			TEXT("  CurrentGrappleSocket->GrappleEdgeComponent: %s\n"),
+    
+			*StaticClass()->GetName(),
+			OwnerPawn ? *OwnerPawn->GetName() : TEXT("nullptr"),
+			(OwnerPawn && OwnerPawn->CapsuleComponent) ? *OwnerPawn->CapsuleComponent->GetName() : TEXT("nullptr"),
+			CurrentGrappleSocket ? *CurrentGrappleSocket->GetName() : TEXT("nullptr"),
+			(CurrentGrappleSocket && CurrentGrappleSocket->GrappleEdgeComponent) ? *CurrentGrappleSocket->GrappleEdgeComponent->GetName() : TEXT("nullptr")
+		);
+		return;
+	}
+	
+}
+
+void UGrapplerComponent::DetachPawnFromGrappleSocket() const
+{
+	if (IsValid(OwnerPawn))
+	{
+		const FDetachmentTransformRules AttachmentRules(FDetachmentTransformRules::KeepWorldTransform);
+		OwnerPawn ->DetachFromActor(AttachmentRules); //  ->DetachFromComponent(AttachmentRules);	
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s:DetachPawnToGrappleSocket - OwnerPawn not valid"), *StaticClass()->GetName());
+		return;
+	}
+}
+
 void UGrapplerComponent::ConstructGrappleRope() const
 {
 	if (IsValid(GrappleRope) && IsValid(OwnerPawn) && IsValid(CurrentGrappleSocket) && IsValid(OwnerPawn->SkeletalMeshComponent))
 	{
 			//Construct the rope length from the Grapple Rope to the Grapple Socket
 			//This is done is relative transform because I assume CableComponents->CableLength is valued in relative from CableComponents location
-			const FTransform GrappleRopesWorldTransform = GrappleRope->GetComponentTransform();
-			const FVector RelativeLocationToGrappleSocket = GrappleRopesWorldTransform.InverseTransformPosition(CurrentGrappleSocket->Root->GetComponentLocation());
-			float CableLength = RelativeLocationToGrappleSocket.Size() - GrapplerRopeExtraShaveOffFromOrAddToLength;
-			GrappleRope->CableLength = CableLength;
+			if (IsValid(CurrentGrappleSocket) && IsValid(CurrentGrappleSocket->GrappleRope))
+			{
+				const FTransform GrappleSocketWorldTransform = CurrentGrappleSocket->GetActorTransform();
+				FVector SocketLocation = OwnerPawn->SkeletalMeshComponent->GetSocketLocation("hand_rSocket");
+				const FVector HandSocketRelativeLocationToGrappleSocket = GrappleSocketWorldTransform.InverseTransformPosition(SocketLocation);
+				const float CableLength = FMath::Abs( HandSocketRelativeLocationToGrappleSocket.Size() - GrapplerRopeExtraShaveOffFromOrAddToLength);
+				
+				CurrentGrappleSocket->GrappleRope->CableLength = CableLength;
+				CurrentGrappleSocket->GrappleRope->EndLocation = HandSocketRelativeLocationToGrappleSocket;
+				
+				CurrentGrappleSocket->GrappleRope->bAttachEnd = true;
+				CurrentGrappleSocket->GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+				
+				AttachPawnToGrappleSocket();
+				CurrentGrappleSocket->GrappleRope->SetVisibility(true);
+			}
 		
 			//Attach the Grapple Rope's end to the Grapple Socket
 			//For some reason doing GetRootComponent() on Grapple Socket returns nullptr, safer to cache the root
-			GrappleRope->SetAttachEndTo(CurrentGrappleSocket, CurrentGrappleSocket->Root->GetFName());
+			//GrappleRope->SetAttachEndTo(CurrentGrappleSocket, CurrentGrappleSocket->Root->GetFName());
 	}
 	else
 	{
@@ -241,6 +300,14 @@ void UGrapplerComponent::ConstructGrappleRope() const
 			(OwnerPawn && OwnerPawn->SkeletalMeshComponent) ? *OwnerPawn->SkeletalMeshComponent->GetName() : TEXT("nullptr")
 		);
 		return;
+	}
+}
+
+void UGrapplerComponent::EnableGrappling() const
+{
+	if (IsValid(CurrentGrappleSocket) && IsValid(CurrentGrappleSocket->GrappleRope))
+	{
+		CurrentGrappleSocket->GrappleRope->bAttachEnd = false;
 	}
 }
 

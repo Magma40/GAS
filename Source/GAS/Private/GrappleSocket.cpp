@@ -173,6 +173,7 @@ void AGrappleSocket::BeginPlay()
 	//Apply the visibility if they are not correct
 	GrapplingSocketWidgetComponent->SetWidgetImageVisibility(bEnableImage);
 	GrapplingSocketWidgetComponent->SetWidgetTextVisibility(bEnableText);
+	GrappleRope->SetVisibility(false);
 }
 
 void AGrappleSocket::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)

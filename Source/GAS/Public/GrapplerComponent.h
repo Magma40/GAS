@@ -34,10 +34,16 @@ public:
 	UFUNCTION(BlueprintCallable) bool TryToAttachToGrappleSocket();
 
 	//Deattaches from the current attached Grapple Socket
-	UFUNCTION(BlueprintCallable) void DeattachFromGrappleSocket();
+	UFUNCTION(BlueprintCallable) void DetachFromGrappleSocket();
 
 	//Tries to get the closest Grapple Socket in range
 	UFUNCTION(BlueprintCallable) AGrappleSocket* FindClosestGrappleSocket() const;
+
+	//Attaches the Pawn to this Grapple Socket
+	UFUNCTION(BlueprintCallable) void AttachPawnToGrappleSocket() const;
+
+	//Dettaches the Pawn to this Grapple Socket
+	UFUNCTION(BlueprintCallable) void DetachPawnFromGrappleSocket() const;
 
 	//Gets CurrentGrappleSocket reference
 	UFUNCTION(BlueprintCallable) AGrappleSocket* GetCurrentGrappleSocket() const { return CurrentGrappleSocket; }
@@ -50,6 +56,8 @@ public:
 
 	//Constructs necessary Grapple Rope variables for current Grapple Socket
 	UFUNCTION(BlueprintCallable) void ConstructGrappleRope() const;
+
+	void EnableGrappling() const;
 
 private:
 
