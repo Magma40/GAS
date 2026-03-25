@@ -10,6 +10,7 @@
 class UGrapplerComponent;
 class USkeletalMeshComponent;
 class UInputAction;
+class UCharacterMoverComponent;
 
 UCLASS(Blueprintable, BlueprintType)
 class GAS_API AMoverPawn : public APawn
@@ -45,4 +46,7 @@ public:
 
 	//Move Action Input Reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UInputAction> MoveAction = nullptr;
+
+	//Character Mover Component Reference
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UCharacterMoverComponent> CharacterMoverComponent = nullptr;
 };

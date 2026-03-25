@@ -5,7 +5,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "MoverPawn.h"
 #include "Components/CapsuleComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
+#include "DefaultMovementSet/LayeredMoves/LaunchMove.h"
+
+UE_DEFINE_GAMEPLAY_TAG(Mover_IsGrappling, "Mover.IsGrappling");
 
 // Sets default values for this component's properties
 UGrapplerComponent::UGrapplerComponent()
@@ -83,13 +86,21 @@ void UGrapplerComponent::TickComponent(float DeltaTime, enum ELevelTick TickType
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (IsValid(CurrentGrappleSocket))
 	{
-		OwnerPawn->SetActorRelativeLocation(FVector::ZeroVector);
 		if (!CurrentGrappleSocket->IsInRangeToGrapple(OwnerPawn) || CurrentGrappleSocket->GetDistanceFromAPawn(OwnerPawn)  > MaxGrapplerRopeLength)
 		{
 			DetachFromGrappleSocket();
 		}
 	}
-	
+
+	if (IsValid(OwnerPawn) && IsValid(OwnerPawn->CharacterMoverComponent))
+	{
+		if (OwnerPawn->CharacterMoverComponent->IsFalling() && bDoingGrapplingAction)
+		{
+			AttachPawnToGrappleSocket();
+			OwnerPawn->SetActorRelativeLocation(FVector::ZeroVector);
+			EnableGrappling();
+		}
+	}
 }
 
 //NOTE: I Attach the Grappler Rope to the Skeletal Mesh Component through blueprint (Mover.SandboxCharacter_Mover - BeginPlay Event)
@@ -161,12 +172,6 @@ void UGrapplerComponent::DetachFromGrappleSocket()
 
 		//Dereference the Grapple Socket pawn was attached to
 		CurrentGrappleSocket = nullptr;
-		
-		//Reattach the Grapple Rope to the player
-		//GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
-
-		//Set the Grapple Rope's length to a reasonable value
-		GrappleRope->CableLength = CachedDefaultRopeLength;
 	}
 }
 
@@ -218,8 +223,7 @@ void UGrapplerComponent::AttachPawnToGrappleSocket() const
 		OwnerPawn->CapsuleComponent->AttachToComponent(CurrentGrappleSocket->GrappleEdgeComponent, AttachmentRules);
 		OwnerPawn->CapsuleComponent->SetRelativeLocation(FVector::ZeroVector);
 
-		FTimerHandle TimerHandle;
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UGrapplerComponent::EnableGrappling, 1.0f, false, 0.5f);
+		OwnerPawn->CharacterMoverComponent->AddGameplayTag(Mover_IsGrappling);
 	}
 	else
 	{
@@ -239,24 +243,64 @@ void UGrapplerComponent::AttachPawnToGrappleSocket() const
 		);
 		return;
 	}
-	
 }
 
 void UGrapplerComponent::DetachPawnFromGrappleSocket() const
 {
-	if (IsValid(OwnerPawn))
+	if (IsValid(OwnerPawn) && IsValid(CurrentGrappleSocket))
 	{
+		CurrentGrappleSocket->GrappleRope->bAttachEnd = false;
 		const FDetachmentTransformRules AttachmentRules(FDetachmentTransformRules::KeepWorldTransform);
-		OwnerPawn ->DetachFromActor(AttachmentRules); //  ->DetachFromComponent(AttachmentRules);	
+		OwnerPawn ->DetachFromActor(AttachmentRules); //  ->DetachFromComponent(AttachmentRules);
+
+		OwnerPawn->CharacterMoverComponent->RemoveGameplayTag(Mover_IsGrappling);
+
+		TSharedPtr<FLayeredMove_Launch> JumpLayeredMove = MakeShared<FLayeredMove_Launch>();
+		JumpLayeredMove->ForceMovementMode = "Falling";
+		JumpLayeredMove->LaunchVelocity = FVector(0, 0, 1000.0f);
+		JumpLayeredMove->DurationMs = 0.0f;
+
+		FMoverTickStartData MoverTickStartData = FMoverTickStartData();
+		MoverTickStartData.InputCmd = OwnerPawn->CharacterMoverComponent->GetLastInputCmd();
+		MoverTickStartData.SyncState = OwnerPawn->CharacterMoverComponent->GetSyncState();
+		MoverTickStartData.AuxState = OwnerPawn->CharacterMoverComponent->GetLastAuxStateContext();
+				
+		FProposedMove ProposedMove = FProposedMove();
+		ProposedMove.PreferredMode = "Falling";
+		ProposedMove.DirectionIntent = OwnerPawn->CharacterMoverComponent->GetVelocity().GetSafeNormal();
+
+		UPrimitiveComponent* Base = OwnerPawn->CharacterMoverComponent->GetMovementBase();
+		if (IsValid(Base) && OwnerPawn->CharacterMoverComponent->IsOnGround())
+		{
+			ProposedMove.LinearVelocity = Base->GetPhysicsLinearVelocity(NAME_None);
+			ProposedMove.AngularVelocityDegrees = Base->GetPhysicsAngularVelocityInDegrees(NAME_None);
+		}
+		else
+		{
+			ProposedMove.LinearVelocity = OwnerPawn->CharacterMoverComponent->GetVelocity();
+			ProposedMove.AngularVelocityDegrees = FVector::ZeroVector;
+		}
+		ProposedMove.bHasDirIntent = true;
+		ProposedMove.MixMode = EMoveMixMode::AdditiveVelocity;
+				
+		JumpLayeredMove->GenerateMove(
+			MoverTickStartData,
+			OwnerPawn->CharacterMoverComponent->GetLastTimeStep(),
+			OwnerPawn->CharacterMoverComponent,
+			const_cast<UMoverBlackboard*>(OwnerPawn->CharacterMoverComponent->GetSimBlackboard()),
+			ProposedMove
+			);
+				
+		OwnerPawn->CharacterMoverComponent->QueueLayeredMove(JumpLayeredMove);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("%s:DetachPawnToGrappleSocket - OwnerPawn not valid"), *StaticClass()->GetName());
+		UE_LOG(LogTemp, Error, TEXT("%s:DetachPawnToGrappleSocket - OwnerPawn or Current GrappleSocket not valid"), *StaticClass()->GetName());
 		return;
 	}
 }
 
-void UGrapplerComponent::ConstructGrappleRope() const
+void UGrapplerComponent::ConstructGrappleRope()
 {
 	if (IsValid(GrappleRope) && IsValid(OwnerPawn) && IsValid(CurrentGrappleSocket) && IsValid(OwnerPawn->SkeletalMeshComponent))
 	{
@@ -267,7 +311,7 @@ void UGrapplerComponent::ConstructGrappleRope() const
 				const FTransform GrappleSocketWorldTransform = CurrentGrappleSocket->GetActorTransform();
 				FVector SocketLocation = OwnerPawn->SkeletalMeshComponent->GetSocketLocation("hand_rSocket");
 				const FVector HandSocketRelativeLocationToGrappleSocket = GrappleSocketWorldTransform.InverseTransformPosition(SocketLocation);
-				const float CableLength = FMath::Abs( HandSocketRelativeLocationToGrappleSocket.Size() - GrapplerRopeExtraShaveOffFromOrAddToLength);
+				const float CableLength = FMath::Abs( HandSocketRelativeLocationToGrappleSocket.Size2D() - GrapplerRopeExtraShaveOffFromOrAddToLength);
 				
 				CurrentGrappleSocket->GrappleRope->CableLength = CableLength;
 				CurrentGrappleSocket->GrappleRope->EndLocation = HandSocketRelativeLocationToGrappleSocket;
@@ -275,13 +319,8 @@ void UGrapplerComponent::ConstructGrappleRope() const
 				CurrentGrappleSocket->GrappleRope->bAttachEnd = true;
 				CurrentGrappleSocket->GrappleRope->SetAttachEndTo(OwnerPawn, OwnerPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
 				
-				AttachPawnToGrappleSocket();
 				CurrentGrappleSocket->GrappleRope->SetVisibility(true);
 			}
-		
-			//Attach the Grapple Rope's end to the Grapple Socket
-			//For some reason doing GetRootComponent() on Grapple Socket returns nullptr, safer to cache the root
-			//GrappleRope->SetAttachEndTo(CurrentGrappleSocket, CurrentGrappleSocket->Root->GetFName());
 	}
 	else
 	{

@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NativeGameplayTags.h"
 #include "Components/ActorComponent.h"
 #include "GrapplerComponent.generated.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Mover_IsGrappling);
 
 class AMoverPawn;
 class AGrappleSocket;
@@ -55,7 +58,7 @@ public:
 	UFUNCTION(BlueprintCallable) bool GetDoingGrapplingAction() const { return bDoingGrapplingAction; }
 
 	//Constructs necessary Grapple Rope variables for current Grapple Socket
-	UFUNCTION(BlueprintCallable) void ConstructGrappleRope() const;
+	UFUNCTION(BlueprintCallable) void ConstructGrappleRope();
 
 	void EnableGrappling() const;
 

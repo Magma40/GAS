@@ -2,6 +2,7 @@
 #include "MoverPawn.h"
 #include "GrapplerComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 
 // Sets default values
 AMoverPawn::AMoverPawn()
@@ -30,6 +31,13 @@ AMoverPawn::AMoverPawn()
 	{
 		GrapplerComponentFound->DestroyComponent();	
 	}
+
+	//Destroy Character Mover Component
+	UCharacterMoverComponent* CharacterMoverComponentFound = GetComponentByClass<UCharacterMoverComponent>();
+	if (IsValid(CharacterMoverComponentFound))
+	{
+		CharacterMoverComponentFound->DestroyComponent();	
+	}
 	
 	//Construct Capsule Component Reference for safer getting outside this script
 	//This needs to be root for Pawn Movement and collision to work properly
@@ -42,6 +50,10 @@ AMoverPawn::AMoverPawn()
 	 {
 	 	SkeletalMeshComponent->SetupAttachment(CapsuleComponent);
 	 }
+
+	//Construct Character Mover Component Reference for safer getting outside this script, and for safe keeping
+	CharacterMoverComponent = CreateDefaultSubobject<UCharacterMoverComponent>(TEXT("CharacterMover"));
+	AddOwnedComponent(CharacterMoverComponent);
 	
 	//Construct Grappler Component Reference for safer getting outside this script, and for safe keeping
 	GrapplerComponent = CreateDefaultSubobject<UGrapplerComponent>(TEXT("GrapplerComponent"));
