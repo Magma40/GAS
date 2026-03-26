@@ -3,6 +3,7 @@
 #include "GrappleSocket.h"
 #include "Kismet/GameplayStatics.h"
 #include "MoverPawn.h"
+#include "DefaultMovementSet/CharacterMoverComponent.h"
 
 UE_DEFINE_GAMEPLAY_TAG(Mover_IsGrappling, "Mover.IsGrappling");
 
@@ -32,17 +33,29 @@ bool UGrapplerComponent::TryToAttachToGrappleSocket(AMoverPawn* InPawn)
 
 void UGrapplerComponent::DetachFromGrappleSocket(AMoverPawn* InPawn)
 {
-	//If pawn is attached to a Grapple Socket, deattach from it
-	if (IsValid(CurrentGrappleSocket))
+	if (IsValid(CurrentGrappleSocket) && IsValid(InPawn))
 	{
-		//Deattach the pawn from the Grapple Socket
-		CurrentGrappleSocket->DetachFromGrappleSocket(InPawn, true);
+		//If pawn is attached to a Grapple Socket, deattach from it
+		if (IsValid(InPawn->CharacterMoverComponent) && InPawn->CharacterMoverComponent->IsFalling())
+		{
+			//Deattach the pawn from the Grapple Socket with force
+			CurrentGrappleSocket->DetachFromGrappleSocket(InPawn, true);
+		}
+		else
+		{
+			//Deattach the pawn from the Grapple Socket without force
+			CurrentGrappleSocket->DetachFromGrappleSocket(InPawn, false);
+		}
 	}
 }
 
 AGrappleSocket* UGrapplerComponent::FindClosestGrappleSocket(const AMoverPawn* InPawn) const
 {
-	if (!IsValid(InPawn)) return nullptr;
+	if (!IsValid(InPawn))
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s:FindClosestGrappleSocket - InPawn is not valid"), *StaticClass()->GetName());
+		return nullptr;
+	}
 
 	//Initialize function-based variables
 	AGrappleSocket* ClosestGrappleSocket = nullptr;

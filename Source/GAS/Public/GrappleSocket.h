@@ -35,6 +35,9 @@ public:
 	//Updates the widget position and rotation
  	void UpdateWidget();
 
+	//Updates the variables on the Grapple Rope
+	void UpdateGrappleRope();
+
 	//Checks if a pawn is close enough to be able to grapple onto this socket
 	bool IsInRangeToGrapple(const AMoverPawn* InPawn) const;
 
