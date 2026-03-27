@@ -36,7 +36,7 @@ void UGrapplerComponent::DetachFromGrappleSocket(AMoverPawn* InPawn)
 	if (IsValid(CurrentGrappleSocket) && IsValid(InPawn))
 	{
 		//If pawn is attached to a Grapple Socket, deattach from it
-		if (IsValid(InPawn->CharacterMoverComponent) && InPawn->CharacterMoverComponent->IsFalling())
+		if (IsValid(InPawn->CharacterMoverComponent) && InPawn->CharacterMoverComponent->IsAirborne())
 		{
 			//Deattach the pawn from the Grapple Socket with force
 			CurrentGrappleSocket->DetachFromGrappleSocket(InPawn, true);
