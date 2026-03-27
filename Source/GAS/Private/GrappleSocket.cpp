@@ -130,6 +130,19 @@ AGrappleSocket::AGrappleSocket()
 		return;
 	}
 	
+	GrappleAreaComponent = CreateDefaultSubobject<USphereComponent>(TEXT("GrappleAreaComponent"));
+	if (IsValid(GrappleAreaComponent))
+	{
+		GrappleAreaComponent->SetupAttachment(Root);
+		GrappleAreaComponent->InitSphereRadius(MinDistanceToGrapple);
+		GrappleAreaComponent->SetCollisionProfileName(TEXT("Trigger"));	
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s: AGrappleSocket - GrappleAreaComponent is not valid"),*StaticClass()->GetName());
+		return;
+	}
+	
 	//Debug log that the object has been constructed
 	UE_LOG(LogTemp, Warning, TEXT("%s:AGrappleSocket - %s Constructed:"), *StaticClass()->GetName(), *this->GetName());
 }
@@ -140,7 +153,7 @@ void AGrappleSocket::BeginPlay()
 	Super::BeginPlay();
 
 	//Try to get the PlayerPawn in the world
-	AMoverPawn* PlayerSearch = Cast<AMoverPawn>(GetWorld()->GetFirstPlayerController()->GetPawn()) ;
+	AMoverPawn* PlayerSearch = Cast<AMoverPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
 	if (!IsValid(PlayerSearch))
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - PlayerSearch not found"), *StaticClass()->GetName());
@@ -165,20 +178,34 @@ void AGrappleSocket::BeginPlay()
 	
 	//Try to get the Player Controller's Enhanced Input Component
 	UEnhancedInputComponent* Input = Cast<UEnhancedInputComponent>(PC->InputComponent);
-	if (!IsValid(Input))
+	if (IsValid(Input))
+	{
+		//Bind so every time the player moves, it should update the Widget
+		Input->BindAction(PlayerSearch->GetMoveAction(), ETriggerEvent::Triggered, this, &AGrappleSocket::UpdateWidget);
+	}
+	else
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s:BeginPlay - Input not found"), *StaticClass()->GetName());
 		return;
 	}
 
-	//Bind so every time the player moves, it should update the Widget and Grapple Rope
-	Input->BindAction(PlayerSearch->GetMoveAction(), ETriggerEvent::Triggered, this, &AGrappleSocket::UpdateWidget);
-	Input->BindAction(PlayerSearch->GetMoveAction(), ETriggerEvent::Triggered, this, &AGrappleSocket::UpdateGrappleRope);
+	if (IsValid(GrappleAreaComponent))
+	{
+		GrappleAreaComponent->OnComponentBeginOverlap.AddDynamic(this, &AGrappleSocket::OverlapBegin);
+		GrappleAreaComponent->OnComponentEndOverlap.AddDynamic(this, &AGrappleSocket::OverlapEnd);	
+	}
 
 	//Apply the visibility if they are not correct
-	GrapplingSocketWidgetComponent->SetWidgetImageVisibility(bEnableImage);
-	GrapplingSocketWidgetComponent->SetWidgetTextVisibility(bEnableText);
-	GrappleRope->SetVisibility(false);
+	if (IsValid(GrapplingSocketWidgetComponent))
+	{
+		GrapplingSocketWidgetComponent->SetWidgetImageVisibility(bEnableImage);
+		GrapplingSocketWidgetComponent->SetWidgetTextVisibility(bEnableText);	
+	}
+
+	if (IsValid(GrappleRope))
+	{
+		GrappleRope->SetVisibility(false);
+	}
 }
 
 void AGrappleSocket::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
@@ -202,32 +229,41 @@ void AGrappleSocket::PostEditChangeProperty(struct FPropertyChangedEvent& Proper
 
 void AGrappleSocket::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
-	if(!IsValid(Cached_PlayerPawn) || !IsValid(GrappleRope)) return;
+	Super::Tick(DeltaTime);;
+	
+	if(!IsValid(Cached_PlayerPawn)) return;
 
-	//If Pawn is not in range or is breaking the rope physics, detach it from the Grapple Socket
-	if (!IsInRangeToGrapple(Cached_PlayerPawn) || GetDistanceFromAPawn(Cached_PlayerPawn)  > MaxGrapplerRopeLength)
+	if (IsValid(Cached_PlayerPawn->GrapplerComponent) && !Cached_PlayerPawn->GrapplerComponent->GetDoingGrapplingAction())
 	{
-		DetachFromGrappleSocket(Cached_PlayerPawn, false);
+		ConstructGrappleRope(Cached_PlayerPawn);
+	}
+	
+	//If Pawn is not in range or is breaking the rope physics, detach it from the Grapple Socket
+	if (IsValid(Cached_PlayerPawn->GrapplerComponent) && GetDistanceFromAPawn(Cached_PlayerPawn)  > MaxGrapplerRopeLength)
+	{
+		Cached_PlayerPawn->GrapplerComponent->DetachFromGrappleSocket(Cached_PlayerPawn);
 		return;
 	}
 	
-	if (IsValid(Cached_PlayerPawn->CharacterMoverComponent))
+	if ((Cached_PlayerPawn->GetActorLocation() - Cached_PawnLocation).Size2D() > IntervalBetweenUpdatingPlayerLocations &&
+		IsValid(GrapplingSocketWidgetComponent) &&
+		!GrapplingSocketWidgetComponent->IsVisible())
 	{
-		//If Pawn is falling or is jumping, apply strained Grapple Rope physics
-		if (Cached_PlayerPawn->CharacterMoverComponent->IsFalling() &&
-			Cached_PlayerPawn->GrapplerComponent->GetDoingGrapplingAction() &&
-			(Cached_PlayerPawn->GetActorLocation() - Cached_PawnLocation).Size2D() >IntervalBetweenUpdatingPlayerLocations &&
-			!EnableGrapplingTimerHandle.IsValid())
+		Cached_PawnLocation = Cached_PlayerPawn->GetActorLocation();
+	
+		if (IsValid(Cached_PlayerPawn->CharacterMoverComponent) &&
+			Cached_PlayerPawn->CharacterMoverComponent->IsAirborne() &&
+			IsValid(Cached_PlayerPawn->GrapplerComponent) &&
+			Cached_PlayerPawn->GrapplerComponent->GetDoingGrapplingAction())
 		{
-			Cached_PawnLocation  = Cached_PlayerPawn->GetActorLocation();
-			GetWorld()->GetTimerManager().SetTimer(EnableGrapplingTimerHandle, this, &AGrappleSocket::EnableGrappling, 0.1f, false);
+			EnableGrappling();
 		}
-		else if (IsValid(Cached_PlayerPawn->SkeletalMeshComponent))
+		else if (IsValid(Cached_PlayerPawn->SkeletalMeshComponent) && IsValid(GrappleRope))
 		{
-			//Set it so the Grapple Rope's end is centered and in place on Pawn's hand
 			FVector SocketLocation = Cached_PlayerPawn->SkeletalMeshComponent->GetSocketLocation("hand_rSocket");
 			const FVector HandSocketRelativeLocationToGrappleSocket = GetActorTransform().InverseTransformPosition(SocketLocation);
+			
+			//Set the Grapple Rope End Location to the relative position of Pawn's hand to the Grapple Socket
 			GrappleRope->EndLocation = HandSocketRelativeLocationToGrappleSocket;
 		}
 	}
@@ -235,52 +271,39 @@ void AGrappleSocket::Tick(float DeltaTime)
 
 void AGrappleSocket::UpdateWidget()
 {
-	if(!IsValid(GrapplingSocketWidgetComponent) || !IsValid(Cached_Camera) || !IsValid(StaticMeshComponent) && !IsValid(GrappleRope)) return;
-
-	AMoverPawn* PlayerSearch = Cast<AMoverPawn>(GetWorld()->GetFirstPlayerController()->GetPawn()); 
-	if (!IsValid(PlayerSearch)) return;
+	if(!IsValid(Cached_PlayerPawn) || !IsValid(GrapplingSocketWidgetComponent) || !IsValid(Cached_Camera) || !IsValid(StaticMeshComponent) && !IsValid(GrappleRope)) return;
 	
 	//If Pawn is in the range to grapple, display the widget
-	if(IsInRangeToGrapple(PlayerSearch))
+	if(!Cached_PlayerPawn->GrapplerComponent->GetDoingGrapplingAction() )
 	{
-		//Calculate the location of the edge of the Grapple Socket mesh 
-		const FVector Direction = (PlayerSearch->GetActorLocation() -  GetActorLocation()).GetSafeNormal();
-		const FBoxSphereBounds Bounds = StaticMeshComponent->GetStaticMesh()->GetBounds();
-		const float Radius = Bounds.SphereRadius;
-		const FVector NewLocation = GetActorLocation() + Direction * Radius;
+		FVector SocketLocation = Cached_PlayerPawn->SkeletalMeshComponent->GetSocketLocation("hand_rSocket");
+		const FVector HandSocketRelativeLocationToGrappleSocket = GetActorTransform().InverseTransformPosition(SocketLocation);
+		 if (FVectorAlmostTheSame( GrappleRope->EndLocation,  HandSocketRelativeLocationToGrappleSocket, 10))
+		 {
+			//Calculate the location of the edge of the Grapple Socket mesh 
+			const FVector Direction = (Cached_PlayerPawn->GetActorLocation() -  GetActorLocation()).GetSafeNormal();
+			const FBoxSphereBounds Bounds = StaticMeshComponent->GetStaticMesh()->GetBounds();
+			const float Radius = Bounds.SphereRadius;
+			const FVector NewLocation = GetActorLocation() + Direction * Radius;
 
-		//Apply new Widget Location so it traces around the Grapple Socket and is always visible and facing towards the Pawn
-		GrapplingSocketWidgetComponent->SetWorldLocation(NewLocation);
-		GrapplingSocketWidgetComponent->SetWorldRotation((Cached_Camera->GetComponentLocation() - GrapplingSocketWidgetComponent->GetComponentLocation()).Rotation());
+			//Apply new Widget Location so it traces around the Grapple Socket and is always visible and facing towards the Pawn
+			GrapplingSocketWidgetComponent->SetWorldLocation(NewLocation);
+			GrapplingSocketWidgetComponent->SetWorldRotation((Cached_Camera->GetComponentLocation() - GrapplingSocketWidgetComponent->GetComponentLocation()).Rotation());
 
-		//When everything is set, make the Widget visible to Pawn
-		GrapplingSocketWidgetComponent->SetWidgetVisibility(true);
+			//When everything is set, make the Widget visible to Pawn
+			GrapplingSocketWidgetComponent->SetWidgetVisibility(true);	
+		}
+		else
+		{
+			//No need to show the Widget to Pawn if Pawn is not in range
+			GrapplingSocketWidgetComponent->SetWidgetVisibility(false);
+		}
 	}
 	else
 	{
 		//No need to show the Widget to Pawn if Pawn is not in range
 		GrapplingSocketWidgetComponent->SetWidgetVisibility(false);
 	}
-}
-
-void AGrappleSocket::UpdateGrappleRope()
-{
-	AMoverPawn* PlayerSearch = Cast<AMoverPawn>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	if (!IsValid(PlayerSearch) || !IsValid(PlayerSearch->CharacterMoverComponent)) return;
-	
-	// if(IsInRangeToGrapple(PlayerSearch) &&
-	// 	!PlayerSearch->CharacterMoverComponent->IsFalling() &&
-	// 	!PlayerSearch->GrapplerComponent->GetDoingGrapplingAction())
-	// {
-	// 	//Construct a rope based on the pawn's location'
-	// 	Cached_PawnLocation  = PlayerSearch->GetActorLocation();
-	// 	ConstructGrappleRope(PlayerSearch);
-	// }
-	// else
-	// {
-	// 	Cached_PawnLocation  = PlayerSearch->GetActorLocation();
-	// 	EnableGrappling();
-	// }
 }
 
 bool AGrappleSocket::IsInRangeToGrapple(const AMoverPawn* InPawn) const
@@ -300,8 +323,6 @@ void AGrappleSocket::AttachToGrappleSocket(AMoverPawn* InPawn)
 {
 	if (IsValid(InPawn) && IsValid(InPawn->GrapplerComponent))
 	{
-		//Set the PlayerPawn
-		Cached_PlayerPawn = InPawn;
 		//Set that Pawn is currently doing Grappling Action
 		InPawn->GrapplerComponent->SetDoingGrapplingAction(true);
 	}
@@ -326,8 +347,6 @@ void AGrappleSocket::AttachToGrappleSocket(AMoverPawn* InPawn)
 
 	if (IsValid(GrappleRope))
 	{
-		//Once the Grapple Rope has been fully constructed, make it visible
-		ConstructGrappleRope(InPawn);
 		GrappleRope->SetVisibility(true);
 	}
 }
@@ -365,7 +384,6 @@ void AGrappleSocket::AttachPawnToGrappleSocket(AMoverPawn* InPawn) const
 
 void AGrappleSocket::DetachFromGrappleSocket(AMoverPawn* InPawn, bool bApplyForce)
 {
-	Cached_PlayerPawn = nullptr;
 	if(IsValid(InPawn) && IsValid(InPawn->GrapplerComponent))
 	{
 		//Set that Pawn is currently not doing Grappling Action anymore
@@ -376,9 +394,6 @@ void AGrappleSocket::DetachFromGrappleSocket(AMoverPawn* InPawn, bool bApplyForc
 
 		//Reset Cached Pawn Location for when Pawn attaches again
 		Cached_PawnLocation = FVector::ZeroVector;
-
-		//Reset Grappling Timer Handle for when Pawn attaches again
-		EnableGrapplingTimerHandle.Invalidate();
 	}
 	else
 	{
@@ -577,5 +592,46 @@ void AGrappleSocket::EnableGrappling() const
 	
 		//Set it so the Pawn is centered and in place on the edge of the Grapple Rope
 		Cached_PlayerPawn->SetActorRelativeLocation(FVector::ZeroVector);
+	}
+}
+
+bool AGrappleSocket::FVectorAlmostTheSame(const FVector& A, const FVector& B, const float Range)
+{
+	if (A.Equals(B)) return true;
+
+	const FVector AB = B - A;
+	if (abs(AB.X) < Range &&
+		abs(AB.Y) < Range &&
+		abs(AB.X) < Range) return true;
+
+	return false;
+}
+
+void AGrappleSocket::OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (IsValid(OtherActor))
+	{
+		AMoverPawn* FoundPawn = Cast<AMoverPawn>(OtherActor);
+		if (IsValid(FoundPawn)) Cached_PlayerPawn = FoundPawn;
+		if (IsValid(FoundPawn) && IsValid(FoundPawn->GrapplerComponent) && !FoundPawn->GrapplerComponent->GetDoingGrapplingAction())
+		{
+			ConstructGrappleRope(FoundPawn);
+		}
+	}
+}
+
+void AGrappleSocket::OverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (IsValid(OtherActor))
+	{
+		AMoverPawn* FoundPawn = Cast<AMoverPawn>(OtherActor);
+		if (IsValid(FoundPawn) && IsValid(FoundPawn->GrapplerComponent) && FoundPawn->GrapplerComponent->GetDoingGrapplingAction())
+		{
+			FoundPawn->GrapplerComponent->DetachFromGrappleSocket(FoundPawn);
+		}
+		else
+		{
+			Cached_PlayerPawn = nullptr;
+		}
 	}
 }

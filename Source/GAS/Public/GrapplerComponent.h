@@ -36,6 +36,9 @@ public:
 
 	//Sets a new Grapple Socket
 	UFUNCTION(BlueprintCallable) void  SetCurrentGrappleSocket(AGrappleSocket* NewGrappleSocket) { CurrentGrappleSocket = NewGrappleSocket; }
+	
+	//Sets a new Grapple Socket
+	UFUNCTION(BlueprintCallable) AGrappleSocket*  GetCurrentGrappleSocket() const { return  CurrentGrappleSocket; }
 
 
 private:

@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "GrappleSocket.generated.h"
 
+class USphereComponent;
 class UCameraComponent;
 class UGrapplingSocketWidgetComponent;
 class AMoverPawn;
@@ -30,13 +31,13 @@ protected:
 
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION() void OverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult & SweepResult);
+	UFUNCTION() void OverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 public:	
 
 	//Updates the widget position and rotation
  	void UpdateWidget();
-
-	//Updates the variables on the Grapple Rope
-	void UpdateGrappleRope();
 
 	//Checks if a pawn is close enough to be able to grapple onto this socket
 	bool IsInRangeToGrapple(const AMoverPawn* InPawn) const;
@@ -61,6 +62,8 @@ public:
 
 	//Function to enable physics for grappling swinging motion
 	void EnableGrappling() const;
+
+	static bool FVectorAlmostTheSame(const FVector& A, const FVector& B, const float Range);
 	
 private:
 	//Player pawn Reference
@@ -69,6 +72,7 @@ private:
 	//Camera Actor Reference
 	UPROPERTY() TObjectPtr<UCameraComponent> Cached_Camera = nullptr;
 
+	//Static Mesh Component Reference
 	UPROPERTY() TObjectPtr<UStaticMeshComponent> StaticMeshComponent = nullptr;
 	
 	//Grappling Socket Widget Component Reference
@@ -79,9 +83,6 @@ private:
 
 	//Cached Pawn Location Reference
 	UPROPERTY() FVector Cached_PawnLocation = FVector::ZeroVector;
-
-	//Cached Pawn Location Reference
-	UPROPERTY() FTimerHandle EnableGrapplingTimerHandle; 
 
 public:
 	//Able to change Min Distance To Grapple in the editor
@@ -110,4 +111,7 @@ public:
 
 	//Grapple Edge Component Reference, this is for the Pawn to grapple onto
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<UCapsuleComponent>  GrappleEdgeComponent= nullptr;
+
+	//Grapple Area Range Component Reference, this is for the Pawn to grapple onto
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<USphereComponent>  GrappleAreaComponent = nullptr;
 };
