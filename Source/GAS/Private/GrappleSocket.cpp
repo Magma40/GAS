@@ -199,7 +199,8 @@ void AGrappleSocket::BeginPlay()
 	if (IsValid(GrapplingSocketWidgetComponent))
 	{
 		GrapplingSocketWidgetComponent->SetWidgetImageVisibility(bEnableImage);
-		GrapplingSocketWidgetComponent->SetWidgetTextVisibility(bEnableText);	
+		GrapplingSocketWidgetComponent->SetWidgetTextVisibility(bEnableText);
+		GrapplingSocketWidgetComponent->SetWidgetVisibility(false);	
 	}
 
 	if (IsValid(GrappleRope))
@@ -632,6 +633,12 @@ void AGrappleSocket::OverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor
 		else
 		{
 			Cached_PlayerPawn = nullptr;
+		}
+		
+		if (IsValid(GrapplingSocketWidgetComponent))
+		{
+			//No need to show the Widget to Pawn if Pawn is not in range
+			GrapplingSocketWidgetComponent->SetWidgetVisibility(false);	
 		}
 	}
 }
