@@ -61,7 +61,7 @@ public:
 	static TSharedPtr<FLayeredMove_Launch> ConstructGrappleMove(const AMoverPawn* InPawn, const FVector& LaunchVelocity);
 
 	//Function to enable physics for grappling swinging motion
-	void EnableGrappling() const;
+	void EnableGrappling();
 
 	static bool FVectorAlmostTheSame(const FVector& A, const FVector& B, const float Range);
 	
@@ -95,23 +95,28 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") bool bEnableText = true;
 
 	//A maximum value which the Grappler Rope can get
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) float MaxGrapplerRopeLength  = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") float MaxGrapplerRopeLength  = 0.0f;
 
 	//An extra value to add or remove length to get a nice proper length on the Grapple Rope
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) float GrapplerRopeExtraShaveOffFromOrAddToLength  = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") float GrapplerRopeExtraShaveOffFromOrAddToLength  = 0.0f;
 	
 	//Interval for updating Pawn's location and making sure its properly set up
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) float IntervalBetweenUpdatingPlayerLocations  = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") float IntervalBetweenUpdatingPlayerLocations  = 0.0f;
 
 	//Root Component Reference
 	UPROPERTY() TObjectPtr<USceneComponent> Root = nullptr;
 
 	//Grapple Rope Reference
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<UCableComponent> GrappleRope = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category = "Grapple Socket") TObjectPtr<UCableComponent> GrappleRope = nullptr;
 
 	//Grapple Edge Component Reference, this is for the Pawn to grapple onto
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<UCapsuleComponent>  GrappleEdgeComponent= nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") TObjectPtr<UCapsuleComponent>  GrappleEdgeComponent= nullptr;
 
 	//Grapple Area Range Component Reference, this is for the Pawn to grapple onto
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) TObjectPtr<USphereComponent>  GrappleAreaComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") TObjectPtr<USphereComponent>  GrappleAreaComponent = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") bool EnableDebuggingText = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") bool EnableGrappleOntoDebuggingText = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") bool EnableConstructRopeDebuggingText = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grapple Socket") bool EnableGrapplingActionDebuggingText = false;
 };

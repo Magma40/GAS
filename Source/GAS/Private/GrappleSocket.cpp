@@ -1,5 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "GrappleSocket.h"
+
+#include <string>
+
 #include "GrapplingSocketWidgetComponent.h"
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
@@ -242,8 +245,8 @@ void AGrappleSocket::Tick(float DeltaTime)
 	//If Pawn is not in range or is breaking the rope physics, detach it from the Grapple Socket
 	if (IsValid(Cached_PlayerPawn->GrapplerComponent) && GetDistanceFromAPawn(Cached_PlayerPawn)  > MaxGrapplerRopeLength)
 	{
-		Cached_PlayerPawn->GrapplerComponent->DetachFromGrappleSocket(Cached_PlayerPawn);
-		return;
+		//Cached_PlayerPawn->GrapplerComponent->DetachFromGrappleSocket(Cached_PlayerPawn);
+		//return;
 	}
 	
 	if ((Cached_PlayerPawn->GetActorLocation() - Cached_PawnLocation).Size2D() > IntervalBetweenUpdatingPlayerLocations &&
@@ -341,7 +344,7 @@ void AGrappleSocket::AttachToGrappleSocket(AMoverPawn* InPawn)
 		return;
 	}
 	
-	if(IsValid(GEngine))
+	if(IsValid(GEngine) && EnableDebuggingText && EnableGrappleOntoDebuggingText)
 	{	
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Grappled onto %s"), *this->GetName()));
 	}
@@ -357,9 +360,8 @@ void AGrappleSocket::AttachPawnToGrappleSocket(AMoverPawn* InPawn) const
 	if (IsValid(InPawn) && IsValid(InPawn->CapsuleComponent) && IsValid(GrappleEdgeComponent))
 	{
 		//Attaches the Pawn (CapsuleComponent = RootComponent), to the end part of the rope
-		const FAttachmentTransformRules AttachmentRules(EAttachmentRule::KeepWorld, false);
+		const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, false);
 		InPawn->CapsuleComponent->AttachToComponent(GrappleEdgeComponent, AttachmentRules);
-		InPawn->CapsuleComponent->SetRelativeLocation(FVector::ZeroVector);
 
 		//Add the GameplayTag IsGrappling to enable animations
 		//This also changes the current MoverComponent movement mode (IsGrappling = Flying)
@@ -385,6 +387,7 @@ void AGrappleSocket::AttachPawnToGrappleSocket(AMoverPawn* InPawn) const
 
 void AGrappleSocket::DetachFromGrappleSocket(AMoverPawn* InPawn, bool bApplyForce)
 {
+	return;
 	if(IsValid(InPawn) && IsValid(InPawn->GrapplerComponent))
 	{
 		//Set that Pawn is currently not doing Grappling Action anymore
@@ -410,7 +413,7 @@ void AGrappleSocket::DetachFromGrappleSocket(AMoverPawn* InPawn, bool bApplyForc
 		return;
 	}
 	
-	if(IsValid(GEngine))
+	if(IsValid(GEngine) && EnableDebuggingText && EnableGrappleOntoDebuggingText)
 	{	
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Grappled off from %s"), *this->GetName()));
 	}
@@ -493,6 +496,16 @@ void AGrappleSocket::ConstructGrappleRope(AMoverPawn* InPawn) const
 		//Attach the Grapple Rope's end to the Pawn's hand	
 		GrappleRope->bAttachEnd = true;
 		GrappleRope->SetAttachEndTo(InPawn, InPawn->SkeletalMeshComponent->GetFName(), "hand_rSocket");
+
+		if(IsValid(GEngine) && EnableDebuggingText && EnableConstructRopeDebuggingText)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 0.0f,  FColor::Cyan, FString::Printf(
+				TEXT("GrappleRope->EndLocation - %s  \n")
+							TEXT("GrappleRope->CableLength - %f  \n"),
+				
+							*GrappleRope->EndLocation.ToString(),
+							GrappleRope->CableLength));
+		}
 	}
 	else
 	{
@@ -582,17 +595,34 @@ TSharedPtr<FLayeredMove_Launch> AGrappleSocket::ConstructGrappleMove(const AMove
 	}
 }
 
-void AGrappleSocket::EnableGrappling() const
+void AGrappleSocket::EnableGrappling()
 {
 	//Disabling bAttachedEnd will cause the physics of the Grapple Rope to be enabled, swinging the pawn
-	if (IsValid(GrappleRope) && IsValid(Cached_PlayerPawn))
+	if (IsValid(GrappleRope) && IsValid(Cached_PlayerPawn) && IsValid(GrappleEdgeComponent))
 	{
-		GrappleRope->bAttachEnd = false;
 		//Attach Pawn to socket and apply its animation
 		AttachPawnToGrappleSocket(Cached_PlayerPawn);
-	
+
+		GrappleRope->bAttachEnd = false;
+
 		//Set it so the Pawn is centered and in place on the edge of the Grapple Rope
-		Cached_PlayerPawn->SetActorRelativeLocation(FVector::ZeroVector);
+		FVector SocketLocation = GrappleRope->GetSocketLocation("CableEnd");
+		FRotator  SocketRotation = GrappleRope->GetSocketRotation("CableEnd");
+		Cached_PlayerPawn->SetActorLocationAndRotation(SocketLocation, SocketRotation);
+
+		if(IsValid(GEngine) && EnableDebuggingText && EnableGrapplingActionDebuggingText)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, -1.0f,  FColor::Cyan, FString::Printf(
+				TEXT("Cached_PlayerPawn->WorldLocation - %s  \n")
+							TEXT("Cached_PlayerPawn->WorldRotation - %s  \n")
+							TEXT("Cached_PlayerPawn->CapsuleComponent->RelativeLocation - %s  \n")
+							TEXT("Cached_PlayerPawn->CapsuleComponent->RelativeRotation - %s  \n"),
+				
+							*Cached_PlayerPawn->GetActorLocation().ToString(),
+							*Cached_PlayerPawn->GetActorRotation().ToString(),
+							*Cached_PlayerPawn->CapsuleComponent->GetRelativeLocation().ToString(),
+							*Cached_PlayerPawn->CapsuleComponent->GetRelativeRotation().ToString()));
+		}
 	}
 }
 
