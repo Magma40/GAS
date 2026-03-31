@@ -607,8 +607,8 @@ void AGrappleSocket::EnableGrappling()
 
 		//Set it so the Pawn is centered and in place on the edge of the Grapple Rope
 		FVector SocketLocation = GrappleRope->GetSocketLocation("CableEnd");
-		FRotator  SocketRotation = GrappleRope->GetSocketRotation("CableEnd");
-		Cached_PlayerPawn->SetActorLocationAndRotation(SocketLocation, SocketRotation);
+		//FRotator  SocketRotation = GrappleRope->GetSocketRotation("CableEnd");
+		Cached_PlayerPawn->SetActorLocation(SocketLocation);
 
 		if(IsValid(GEngine) && EnableDebuggingText && EnableGrapplingActionDebuggingText)
 		{
