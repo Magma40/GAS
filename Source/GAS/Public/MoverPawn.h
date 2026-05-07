@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/SphereComponent.h"
 #include "GameFramework/Character.h"
 #include "MoverPawn.generated.h"
 
@@ -17,36 +16,27 @@ class GAS_API AMoverPawn : public APawn
 {
 	GENERATED_BODY()
 
-public:
-	// Sets default values for this pawn's properties
+protected:
 	AMoverPawn();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	//Get Move Action
-	UInputAction* GetMoveAction() const { return MoveAction; }
-
 	//Grappler Component Reference
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UGrapplerComponent> GrapplerComponent = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category = "Mover Pawn")
+	TObjectPtr<UGrapplerComponent> GrapplerComponent = nullptr;
 
 	//Skeletal Mesh Component Reference
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category = "Mover Pawn")
+	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComponent = nullptr;
 
 	//Capsule Component Reference
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UCapsuleComponent> CapsuleComponent = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category = "Mover Pawn")
+	TObjectPtr<UCapsuleComponent> CapsuleComponent = nullptr;
 
 	//Move Action Input Reference
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UInputAction> MoveAction = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category = "Mover Pawn")
+	TObjectPtr<UInputAction> MoveAction = nullptr;
 
 	//Character Mover Component Reference
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) TObjectPtr<UCharacterMoverComponent> CharacterMoverComponent = nullptr;
+	UPROPERTY(BlueprintReadWrite, Category = "Mover Pawn")
+	TObjectPtr<UCharacterMoverComponent> CharacterMoverComponent = nullptr;
 };

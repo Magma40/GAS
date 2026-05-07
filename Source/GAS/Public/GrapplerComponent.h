@@ -17,37 +17,54 @@ class GAS_API UGrapplerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
+protected:	
 	UGrapplerComponent();
 
 public:	
 	//Bool check to see if Pawn is eligible to grapple onto the closest Grapple Socket
-	UFUNCTION(BlueprintCallable) bool TryToAttachToGrappleSocket(AMoverPawn* InPawn);
+	UFUNCTION(BlueprintCallable)
+	bool TryToAttachToGrappleSocket(AMoverPawn* InPawn);
 
 	//Deattaches from the current attached Grapple Socket
-	UFUNCTION(BlueprintCallable) void DetachFromGrappleSocket(AMoverPawn* InPawn);
+	UFUNCTION(BlueprintCallable)
+	void DetachFromGrappleSocket(AMoverPawn* InPawn);
 	
 	//Sets the doing Grappling Action
-	UFUNCTION(BlueprintCallable) void SetDoingGrapplingAction(const bool bNewValue) { bDoingGrapplingAction = bNewValue; }
+	UFUNCTION(BlueprintCallable)
+	void SetDoingGrapplingAction(const bool bNewValue)
+	{
+		bDoingGrapplingAction = bNewValue;
+	}
 	
 	//Checks if Pawn is currently doing Grappling Action
-	UFUNCTION(BlueprintCallable) bool GetDoingGrapplingAction() const { return bDoingGrapplingAction; }
+	UFUNCTION(BlueprintCallable)
+	bool GetDoingGrapplingAction() const
+	{
+		return bDoingGrapplingAction;
+	}
 
 	//Sets a new Grapple Socket
-	UFUNCTION(BlueprintCallable) void  SetCurrentGrappleSocket(AGrappleSocket* NewGrappleSocket) { CurrentGrappleSocket = NewGrappleSocket; }
+	UFUNCTION(BlueprintCallable)
+	void SetCurrentGrappleSocket(AGrappleSocket* NewGrappleSocket)
+	{
+		CurrentGrappleSocket = NewGrappleSocket;
+	}
 	
 	//Sets a new Grapple Socket
-	UFUNCTION(BlueprintCallable) AGrappleSocket*  GetCurrentGrappleSocket() const { return  CurrentGrappleSocket; }
-
-
+	UFUNCTION(BlueprintCallable) AGrappleSocket*  GetCurrentGrappleSocket() const
+	{
+		return  CurrentGrappleSocket;
+	}
+	
 private:
 	//Tries to get the closest Grapple Socket in range
 	AGrappleSocket* FindClosestGrappleSocket(const AMoverPawn* InPawn) const;
 	
 	//Bool for checking if Pawn doing Grappling Action
-	UPROPERTY() bool bDoingGrapplingAction = false;
+	UPROPERTY()
+	bool bDoingGrapplingAction = false;
 
 	//Current Grapple socket reference
-	UPROPERTY() TObjectPtr<AGrappleSocket> CurrentGrappleSocket = nullptr;
+	UPROPERTY()
+	TObjectPtr<AGrappleSocket> CurrentGrappleSocket = nullptr;
 };
